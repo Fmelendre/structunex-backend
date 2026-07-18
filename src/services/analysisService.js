@@ -89,6 +89,7 @@ async function assembleModel(projectId) {
       nodeA: e.nodeA,
       nodeB: e.nodeB,
       sectionId: String(e.frameSectionId),
+      roll: e.roll != null ? e.roll : 0, // section orientation angle (degrees)
     }));
 
   const assignedIds = new Set(solverElements.map((e) => e.id));
@@ -112,7 +113,10 @@ async function assembleModel(projectId) {
     sections,
     elements: solverElements,
     supports,
-    loads,
+    // Defensa por datos antiguos: el calc-service exige loadPattern en cada carga
+    // nodal (y una carga sin patrón no se aplicaría a ningún caso). Descartamos las
+    // que no lo tengan para no provocar un 422.
+    loads: loads.filter((l) => l.loadPattern),
     // Only loads on bars that made it into the model (have a section).
     frameLoads: frameLoads.filter((fl) => assignedIds.has(fl.elementId)),
     areas,

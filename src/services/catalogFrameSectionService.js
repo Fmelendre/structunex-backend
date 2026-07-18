@@ -40,13 +40,42 @@ function keepFields(def) {
   return ["shape", ...(SHAPE_DIMS[def.shape] || [])];
 }
 
-// Confirma que el material referenciado existe y pertenece al usuario.
-async function assertMaterial(ownerId, materialId) {
+// Materiales admitidos por tipo de propiedad de la sección. `other` acepta
+// cualquiera. Debe casar con las reglas del frontend/Zod.
+const COMPATIBLE_MATERIAL = {
+  concrete: ["concrete"],
+  steel: ["steel"],
+  other: null, // sin restricción
+};
+
+// Confirma que el material referenciado existe, pertenece al usuario y es
+// coherente con el `propertyType` de la sección.
+async function assertMaterial(ownerId, materialId, propertyType) {
   if (!isValidObjectId(materialId)) throw new AppError(400, "Material no válido");
   const mat = await CatalogMaterial.findOne({ _id: materialId, ownerId })
-    .select("_id")
+    .select("type")
     .lean();
   if (!mat) throw new AppError(400, "Material no encontrado");
+  const allowed = COMPATIBLE_MATERIAL[propertyType];
+  if (allowed && !allowed.includes(mat.type)) {
+    throw new AppError(
+      400,
+      `El material (${mat.type}) no es coherente con una sección de tipo ${propertyType}`
+    );
+  }
+  return mat;
+}
+
+// El material de armadura debe existir, pertenecer al usuario y ser armadura/acero.
+async function assertRebarMaterial(ownerId, materialId) {
+  if (!isValidObjectId(materialId))
+    throw new AppError(400, "Material de armadura no válido");
+  const mat = await CatalogMaterial.findOne({ _id: materialId, ownerId })
+    .select("type")
+    .lean();
+  if (!mat) throw new AppError(400, "Material de armadura no encontrado");
+  if (!["rebar", "steel"].includes(mat.type))
+    throw new AppError(400, "El material de armadura debe ser de tipo armadura o acero");
 }
 
 // Resuelve el perfil AISC (solo source catalog) y computa las props.
@@ -71,9 +100,15 @@ module.exports = {
   },
 
   create: async (ownerId, data) => {
-    await assertMaterial(ownerId, data.materialId);
+    await assertMaterial(ownerId, data.materialId, data.propertyType);
+    if (data.reinforcement && data.reinforcement.rebarMaterialId) {
+      await assertRebarMaterial(ownerId, data.reinforcement.rebarMaterialId);
+    }
     const props = resolveProps(data);
-    return Model.create({ ...data, ownerId, props });
+    const doc = { ...data, ownerId, props };
+    // El armado sólo tiene sentido en hormigón.
+    if (doc.propertyType !== "concrete") delete doc.reinforcement;
+    return Model.create(doc);
   },
 
   update: async (ownerId, id, data) => {
@@ -85,15 +120,24 @@ module.exports = {
     // siempre viene en el PATCH). Sirve para recomputar props de forma robusta
     // aunque el parche sea parcial.
     const def = { ...existing, ...data };
-    await assertMaterial(ownerId, def.materialId);
+    await assertMaterial(ownerId, def.materialId, def.propertyType);
+    if (def.reinforcement && def.reinforcement.rebarMaterialId) {
+      await assertRebarMaterial(ownerId, def.reinforcement.rebarMaterialId);
+    }
     const props = resolveProps(def);
 
-    const update = { $set: { ...data, props } };
+    const set = { ...data, props };
     // Al cambiar de source/shape, limpiar los campos de definición no usados.
     const keep = keepFields(def);
     const drop = ALL_DEF_FIELDS.filter(
       (f) => !keep.includes(f) && !(f in data)
     );
+    // El armado sólo vive en hormigón: al dejar de serlo, se elimina.
+    if (def.propertyType !== "concrete") {
+      delete set.reinforcement;
+      drop.push("reinforcement");
+    }
+    const update = { $set: set };
     if (drop.length) update.$unset = Object.fromEntries(drop.map((k) => [k, ""]));
 
     const doc = await Model.findOneAndUpdate({ _id: id, ownerId }, update, {

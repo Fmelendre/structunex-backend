@@ -47,18 +47,6 @@ function fromCalcError(err) {
   );
 }
 
-// Legacy single-case solve (dim + typed elements). Kept for anything still on it.
-async function solveModel(model) {
-  try {
-    const { data } = await axios.post(`${env.calcServiceUrl}/solve`, model, {
-      timeout: 30000,
-    });
-    return data;
-  } catch (err) {
-    throw fromCalcError(err);
-  }
-}
-
 // Condition-based, multi-pattern engine. `request` is { analysisOptions, model }.
 // Returns { patterns, activeDofs, solvedAt, notes }.
 async function analyzeModel(request) {
@@ -72,4 +60,4 @@ async function analyzeModel(request) {
   }
 }
 
-module.exports = { solveModel, analyzeModel };
+module.exports = { analyzeModel };

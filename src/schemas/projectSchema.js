@@ -20,6 +20,9 @@ const element = z.object({
   nodeA: z.string().min(1),
   nodeB: z.string().min(1),
   frameSectionId: z.string().optional(),
+  // Section orientation about the member axis, in degrees (SAP2000 "angle").
+  // Optional: Mongoose defaults it to 0.
+  roll: z.number().optional(),
 });
 
 // Booleans/numbers below are optional (no Zod default) — Mongoose defaults them
@@ -36,7 +39,9 @@ const support = z.object({
 
 const load = z.object({
   nodeId: z.string().min(1),
-  loadPattern: z.string().optional(),
+  // Required: the calc-service attributes every nodal load to a Load Pattern
+  // (NodalLoadV2.loadPattern is mandatory), same as frame/area loads.
+  loadPattern: z.string().min(1),
   fx: z.number().optional(),
   fy: z.number().optional(),
   fz: z.number().optional(),

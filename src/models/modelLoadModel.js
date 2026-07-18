@@ -9,7 +9,7 @@ const loadSchema = new Schema(
       required: true,
     },
     nodeId: { type: String, required: true },
-    loadPattern: { type: String }, // Load Pattern name
+    loadPattern: { type: String, required: true }, // Load Pattern name
     fx: { type: Number, default: 0 },
     fy: { type: Number, default: 0 },
     fz: { type: Number, default: 0 },

@@ -15,6 +15,7 @@ const elementSchema = new Schema(
     nodeA: { type: String, required: true },
     nodeB: { type: String, required: true },
     frameSectionId: { type: String }, // CatalogFrameSection _id (optional)
+    roll: { type: Number, default: 0 }, // section orientation angle (degrees)
   },
   { collection: "model_elements", timestamps: true }
 );

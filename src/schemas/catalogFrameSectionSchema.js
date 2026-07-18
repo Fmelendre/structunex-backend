@@ -14,12 +14,77 @@ const modifiers = z
   })
   .default({});
 
+// Formas paramétricas válidas por tipo de propiedad. El hormigón se limita a
+// las macizas habituales (rect/circ/tee); el acero y "other", a todas. Debe
+// coincidir con SHAPES_BY_TYPE del frontend (section-dialog.tsx).
+const ALL_SHAPES = [
+  "rectangular",
+  "circular",
+  "pipe",
+  "box",
+  "ishape",
+  "channel",
+  "tee",
+  "angle",
+];
+const SHAPES_BY_TYPE = {
+  steel: ALL_SHAPES,
+  concrete: ["rectangular", "circular", "tee"],
+  other: ALL_SHAPES,
+};
+
+// Armado (solo hormigón). Superset viga+columna; sólo designRole y cover son
+// obligatorios (el resto se rellena según el diseño). No lo consume el solver.
+const reinforcement = z.object({
+  designRole: z.enum(["beam", "column"]),
+  rebarMaterialId: z.string().min(1).optional(), // ObjectId validado en servicio
+  cover: z.number().positive(),
+  // Columna
+  pattern: z.enum(["rectangular", "circular"]).optional(),
+  longBarDia: z.number().positive().optional(),
+  numBars3: z.number().int().positive().optional(),
+  numBars2: z.number().int().positive().optional(),
+  numBarsCirc: z.number().int().positive().optional(),
+  tieBarDia: z.number().positive().optional(),
+  tieSpacing: z.number().positive().optional(),
+  confinement: z.enum(["ties", "spiral"]).optional(),
+  // Viga
+  coverTop: z.number().positive().optional(),
+  coverBot: z.number().positive().optional(),
+});
+
 const base = {
   name: z.string().min(1),
   materialId: z.string().min(1), // ObjectId validado en el servicio (pertenencia)
+  // Tipo de propiedad (estilo SAP). La coherencia material.type == propertyType
+  // se valida en el servicio (requiere DB); aquí van las reglas sin DB.
+  propertyType: z.enum(["steel", "concrete", "other"]).default("steel"),
+  reinforcement: reinforcement.optional(),
   modifiers,
   color: z.string().optional(), // display color (hex)
 };
+
+// Reglas de coherencia por tipo (sin DB). Tolerantes con parches parciales:
+// solo se aplican cuando los campos implicados están presentes.
+function withTypeRules(schema) {
+  return schema
+    .refine((v) => v.source !== "catalog" || v.propertyType !== "concrete", {
+      message: "El hormigón no admite perfiles de catálogo AISC",
+      path: ["source"],
+    })
+    .refine((v) => v.propertyType !== "concrete" || v.reinforcement != null, {
+      message: "Las secciones de hormigón requieren armado",
+      path: ["reinforcement"],
+    })
+    .refine(
+      (v) =>
+        v.source !== "parametric" ||
+        v.shape == null ||
+        v.propertyType == null ||
+        SHAPES_BY_TYPE[v.propertyType].includes(v.shape),
+      { message: "La forma no es válida para este tipo de sección", path: ["shape"] }
+    );
+}
 
 // --- source: catalog / general ---
 const catalog = z.object({
@@ -128,8 +193,12 @@ function pickUpdate(data) {
   return catalogU;
 }
 
-const createSchema = { safeParse: (data) => pickCreate(data).safeParse(data) };
-const updateSchema = { safeParse: (data) => pickUpdate(data).safeParse(data) };
+const createSchema = {
+  safeParse: (data) => withTypeRules(pickCreate(data)).safeParse(data),
+};
+const updateSchema = {
+  safeParse: (data) => withTypeRules(pickUpdate(data)).safeParse(data),
+};
 
 module.exports = {
   createCatalogFrameSection: createSchema,
