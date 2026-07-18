@@ -78,6 +78,14 @@ const area = z.object({
   id: z.string().min(1),
   nodeIds: z.array(z.string().min(1)).min(3),
   areaSectionId: z.string().optional(),
+  // Per-area auto-mesh divisions (SAP-style N x M); null/absent => automatic default.
+  mesh: z
+    .object({
+      along12: z.number().int().min(1).max(100),
+      along13: z.number().int().min(1).max(100),
+    })
+    .nullable()
+    .optional(),
 });
 
 // Project holds metadata only; the structural model is built incrementally via
