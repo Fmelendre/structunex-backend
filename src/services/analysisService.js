@@ -11,6 +11,7 @@ const {
   ModelAreaLoad,
   ModelConfiguration,
   CatalogFrameSection,
+  CatalogAreaSection,
   CatalogMaterial,
 } = require("../models");
 const { AppError } = require("../middleware/errorHandler");
@@ -51,9 +52,30 @@ async function assembleModel(projectId) {
     : [];
   const sectionById = new Map(catSections.map((s) => [String(s._id), s]));
 
-  const materialIds = [...new Set(catSections.map((s) => String(s.materialId)))].filter(
-    (id) => mongoose.isValidObjectId(id)
-  );
+  // Areas reference a CatalogAreaSection (shell: thickness + material). Expand it the
+  // same way as frame sections so meshed shells get their stiffness. Areas without a
+  // valid section pass through unmeshed (the calc-service lumps their load to corners).
+  const areaSectionIds = [
+    ...new Set(
+      areas
+        .map((a) => a.areaSectionId)
+        .filter((id) => id && mongoose.isValidObjectId(id))
+        .map(String)
+    ),
+  ];
+  const catAreaSections = areaSectionIds.length
+    ? await CatalogAreaSection.find({ _id: { $in: areaSectionIds } }).lean()
+    : [];
+
+  // Materials come from BOTH frame and area sections (union), so shell materials land
+  // in the same flat list the engine consumes.
+  const materialIds = [
+    ...new Set(
+      [...catSections, ...catAreaSections]
+        .map((s) => String(s.materialId))
+        .filter((id) => mongoose.isValidObjectId(id))
+    ),
+  ];
   const catMaterials = materialIds.length
     ? await CatalogMaterial.find({ _id: { $in: materialIds } }).lean()
     : [];
@@ -80,6 +102,18 @@ async function assembleModel(projectId) {
       J: (p.J || 0) * (mod.j != null ? mod.j : 1),
     };
   });
+
+  // Engine area sections: { id, materialId, shellType, thicknessMembrane,
+  // thicknessBending, modifiers }. Thicknesses are already stored in metres; the
+  // calc-service meshes each area into CQUAD4 shells against this section.
+  const areaSections = catAreaSections.map((s) => ({
+    id: String(s._id),
+    materialId: String(s.materialId),
+    shellType: s.shellType,
+    thicknessMembrane: s.thicknessMembrane,
+    thicknessBending: s.thicknessBending,
+    modifiers: s.modifiers || {},
+  }));
 
   // Bars reference their section by the catalog _id (the section carries material).
   const solverElements = assigned
@@ -121,6 +155,7 @@ async function assembleModel(projectId) {
     frameLoads: frameLoads.filter((fl) => assignedIds.has(fl.elementId)),
     areas,
     areaLoads,
+    areaSections,
   };
 }
 
