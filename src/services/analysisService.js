@@ -169,20 +169,24 @@ async function resolveOptions(projectId, options) {
     : [];
   if (activeDofs.length === 0) activeDofs = [...ALL_DOFS];
 
+  // One config read for load patterns + the modal inputs (Mass Source, Modal cases).
+  // SAP-style single Run: the calc-service also solves modes when modalCases is present.
+  const config = await ModelConfiguration.findOne({ projectId })
+    .select("loadPatterns massSource modalCases")
+    .lean();
+
   let loadPatterns = Array.isArray(opts.loadPatterns) ? opts.loadPatterns : null;
-  if (!loadPatterns) {
-    const config = await ModelConfiguration.findOne({ projectId })
-      .select("loadPatterns")
-      .lean();
-    loadPatterns = (config && config.loadPatterns) || [];
-  }
+  if (!loadPatterns) loadPatterns = (config && config.loadPatterns) || [];
   loadPatterns = loadPatterns.map((p) => ({
     name: p.name,
     type: p.type || "dead",
     selfWeightMultiplier: p.selfWeightMultiplier != null ? p.selfWeightMultiplier : 0,
   }));
 
-  return { activeDofs, loadPatterns };
+  const massSource = (config && config.massSource) || null;
+  const modalCases = (config && config.modalCases) || [];
+
+  return { analysisOptions: { activeDofs, loadPatterns }, massSource, modalCases };
 }
 
 // Runs the calculation for an already-authorized project (loaded by
@@ -194,9 +198,12 @@ async function run(project, options) {
   await project.save();
 
   try {
-    const analysisOptions = await resolveOptions(projectId, options);
+    const { analysisOptions, massSource, modalCases } = await resolveOptions(
+      projectId,
+      options
+    );
     const model = await assembleModel(projectId);
-    const result = await analyzeModel({ analysisOptions, model });
+    const result = await analyzeModel({ analysisOptions, model, massSource, modalCases });
 
     await Result.findOneAndUpdate(
       { projectId },
