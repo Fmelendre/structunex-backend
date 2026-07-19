@@ -20,9 +20,49 @@ const gridSystem = z.object({
 const loadPattern = z.object({
   name: z.string().min(1),
   type: z
-    .enum(["dead", "superDead", "live", "wind", "snow", "quake", "other"])
+    .enum([
+      "dead",
+      "superDead",
+      "live",
+      "roofLive",
+      "wind",
+      "snow",
+      "rain",
+      "quake",
+      "other",
+    ])
     .optional(),
   selfWeightMultiplier: z.number().optional(),
+});
+
+// Combinación de carga: suma lineal de patrones (pattern = loadPatterns[].name).
+const comboFactor = z.object({
+  pattern: z.string().min(1),
+  factor: z.number(),
+});
+const loadCombination = z.object({
+  name: z.string().min(1),
+  factors: z.array(comboFactor),
+});
+
+// Mass Source (Define → Mass Source): masa para el análisis modal futuro.
+const massMultiplier = z.object({
+  pattern: z.string().min(1),
+  multiplier: z.number(),
+});
+const massSource = z.object({
+  name: z.string().min(1),
+  elementSelfMass: z.boolean(),
+  specifiedLoadPatterns: z.boolean(),
+  multipliers: z.array(massMultiplier),
+});
+
+// Load Case tipo Modal (Define → Load Cases): parámetros del análisis modal.
+const modalCase = z.object({
+  name: z.string().min(1),
+  typeOfModes: z.enum(["eigen", "ritz"]),
+  maxModes: z.number().int().positive(),
+  minModes: z.number().int().positive(),
 });
 
 const configuration = z
@@ -31,6 +71,9 @@ const configuration = z
     defaultFrameSectionId: z.string().nullable().optional(),
     defaultAreaSectionId: z.string().nullable().optional(),
     loadPatterns: z.array(loadPattern).optional(),
+    loadCombinations: z.array(loadCombination).optional(),
+    massSource: massSource.nullable().optional(),
+    modalCases: z.array(modalCase).optional(),
   })
   .strict();
 
