@@ -7,6 +7,9 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@clerk/express": "^2.1.43",
     "axios": "^1.7.7",
