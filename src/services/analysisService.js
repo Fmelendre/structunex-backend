@@ -15,7 +15,7 @@ const {
   CatalogMaterial,
 } = require("../models");
 const { AppError } = require("../middleware/errorHandler");
-const { analyzeModel } = require("./calcService");
+const analysisJob = require("./analysisJob");
 
 const ALL_DOFS = ["UX", "UY", "UZ", "RX", "RY", "RZ"];
 
@@ -194,44 +194,86 @@ async function resolveOptions(projectId, options) {
 // Runs the calculation for an already-authorized project (loaded by
 // loadProject). `options` is the request body's analysisOptions (the condition).
 // The HTTP call to the solver stays outside any transaction.
+// Starts the analysis and returns as soon as the job is queued - the solve itself runs
+// in the background (analysisJob) and reports progress through the project document.
+// Blocking here would be worse than slow: Heroku's router aborts any request without a
+// response within 30 s, so a long solve could never finish over a synchronous call.
 async function run(project, options) {
   const projectId = project._id;
-  project.status = "solving";
-  await project.save();
 
-  try {
-    const { analysisOptions, massSource, modalCases } = await resolveOptions(
-      projectId,
-      options
-    );
-    const model = await assembleModel(projectId);
-    const result = await analyzeModel({ analysisOptions, model, massSource, modalCases });
+  // Assemble everything the solver needs BEFORE going async, so a bad model still fails
+  // as a normal 4xx on this request instead of surfacing later as a job error.
+  const { analysisOptions, massSource, modalCases } = await resolveOptions(
+    projectId,
+    options
+  );
+  const model = await assembleModel(projectId);
 
-    await Result.findOneAndUpdate(
-      { projectId },
-      { $set: { ...result, projectId } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    project.status = "solved";
-    await project.save();
-    return result;
-  } catch (err) {
-    project.status = "error";
-    await project.save();
-    if (err instanceof AppError) throw err;
-    throw new AppError(502, "Calc service failed to solve the model");
-  }
+  await analysisJob.start(projectId, {
+    analysisOptions,
+    model,
+    massSource,
+    modalCases,
+  });
+
+  return {
+    status: "solving",
+    progress: {
+      step: "preparing",
+      message: `Preparando modelo · ${model.nodes.length} nudos, ${model.elements.length} barras, ${model.areas.length} áreas`,
+    },
+  };
 }
 
-// Current analysis state + last result for a project.
+// A run whose progress stopped moving this long ago is orphaned: the web dyno was
+// restarted (deploy, routine cycling) while the job was in flight.
+const STALE_MS = 5 * 60 * 1000;
+
+// Current analysis state + live progress + last result for a project.
 async function get(projectId) {
   const [project, result] = await Promise.all([
-    Project.findById(projectId).select("status").lean(),
+    Project.findById(projectId)
+      .select("status analysisProgress analysisError")
+      .lean(),
     Result.findOne({ projectId })
       .select("-_id -projectId -__v -createdAt -updatedAt")
       .lean(),
   ]);
-  return { status: project ? project.status : null, result: result || null };
+  if (!project) return { status: null, progress: null, error: null, result: null };
+
+  const progress = project.analysisProgress || null;
+
+  // Orphaned run: nothing in this process is driving it any more, so stop reporting
+  // "solving" forever and let the user relaunch.
+  const stale =
+    project.status === "solving" &&
+    !analysisJob.isRunning(projectId) &&
+    (!progress ||
+      !progress.updatedAt ||
+      Date.now() - new Date(progress.updatedAt).getTime() > STALE_MS);
+  if (stale) {
+    const message = "El análisis se interrumpió (el servidor se reinició). Vuelve a lanzarlo.";
+    await analysisJob.settleFailure(projectId, message).catch(() => {});
+    return {
+      status: result ? "solved" : "draft",
+      progress: null,
+      error: message,
+      result: result || null,
+    };
+  }
+
+  return {
+    status: project.status,
+    progress,
+    error: project.analysisError || null,
+    result: result || null,
+  };
 }
 
-module.exports = { run, get, assembleModel };
+// Hangs up on the calc-service; it notices the disconnect and kills MYSTRAN. Previous
+// results are left untouched (see analysisJob.settleFailure).
+function cancel(projectId) {
+  return analysisJob.cancel(projectId);
+}
+
+module.exports = { run, get, cancel, assembleModel };

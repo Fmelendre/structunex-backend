@@ -14,6 +14,26 @@ const projectSchema = new Schema(
       enum: ["draft", "solving", "solved", "error"],
       default: "draft",
     },
+    // Live progress of the running analysis (see services/analysisJob.js). The frontend
+    // polls GET /projects/:id/analysis and renders `step` + `message`; `current`/`total`
+    // only mean something for the per-load-pattern loop. `updatedAt` doubles as the
+    // heartbeat that lets us spot a run orphaned by a dyno restart.
+    analysisProgress: {
+      type: new Schema(
+        {
+          step: { type: String },
+          message: { type: String },
+          current: { type: Number },
+          total: { type: Number },
+          updatedAt: { type: Date },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
+    // Why the last run failed (or that it was cancelled). Kept apart from `status` so a
+    // failed re-run can leave the previous results in place and still report the reason.
+    analysisError: { type: String, default: null },
     // Metadata del proyecto (creada desde el asistente del frontend).
     templateId: { type: String },
     // Tipo de análisis (formulación de cálculo). Inmutable una vez creado.
