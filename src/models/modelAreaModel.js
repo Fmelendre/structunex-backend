@@ -24,6 +24,9 @@ const areaSchema = new Schema(
     nodeIds: { type: [String], required: true }, // boundary node domain ids
     areaSectionId: { type: String }, // CatalogAreaSection _id (optional)
     mesh: { type: areaMeshSchema, default: undefined }, // per-area mesh divisions (optional)
+    // Local axes orientation about the normal (local 3), in degrees (SAP2000 area
+    // "local axis angle"). Default 0.
+    localAxisAngle: { type: Number, default: 0 },
   },
   { collection: "model_areas", timestamps: true }
 );

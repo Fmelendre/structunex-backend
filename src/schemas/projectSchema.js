@@ -86,6 +86,9 @@ const area = z.object({
     })
     .nullable()
     .optional(),
+  // Orientación de los ejes locales alrededor de la normal (eje local 3), en grados
+  // (ángulo "local axis" estilo SAP2000). Por defecto 0.
+  localAxisAngle: z.number().optional(),
 });
 
 // Project holds metadata only; the structural model is built incrementally via
