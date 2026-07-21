@@ -17,6 +17,13 @@ const resultSchema = new Schema(
     activeDofs: { type: [String], default: [] },
     notes: { type: [String], default: [] },
     solvedAt: { type: String },
+    // Auto-mesh of the areas (synthetic nodes, CQUAD4s, subdivided boundary beams) and
+    // the modal results. Every field of the calc-service contract MUST be declared here:
+    // Mongoose is strict by default and silently drops anything it does not know, and
+    // this document is what the client reads back from GET /analysis - so a missing
+    // field simply disappears from the UI (no mesh, no modes) with no error anywhere.
+    meshAreas: { type: Schema.Types.Mixed, default: undefined },
+    modes: { type: Array, default: [] },
   },
   { collection: "results", timestamps: true, minimize: false }
 );
