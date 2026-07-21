@@ -15,6 +15,19 @@ const node = z.object({
 
 // Barra: referencia una frame section del catálogo (CatalogFrameSection, que
 // lleva su material). frameSectionId es opcional (se puede dibujar sin asignar).
+// Componentes liberadas en UN extremo, en ejes locales (nombres SAP2000):
+// P axial, V2/V3 cortantes, T torsión, M2/M3 flexión.
+const endReleases = z
+  .object({
+    p: z.boolean().optional(),
+    v2: z.boolean().optional(),
+    v3: z.boolean().optional(),
+    t: z.boolean().optional(),
+    m2: z.boolean().optional(),
+    m3: z.boolean().optional(),
+  })
+  .optional();
+
 const element = z.object({
   id: z.string().min(1),
   nodeA: z.string().min(1),
@@ -23,6 +36,12 @@ const element = z.object({
   // Section orientation about the member axis, in degrees (SAP2000 "angle").
   // Optional: Mongoose defaults it to 0.
   roll: z.number().optional(),
+  // Liberaciones de extremo (SAP2000 "Frame Releases"): i = extremo inicial (nodeA),
+  // j = extremo final (nodeB). Ausente = ambos extremos empotrados.
+  releases: z
+    .object({ i: endReleases, j: endReleases })
+    .nullable()
+    .optional(),
 });
 
 // Booleans/numbers below are optional (no Zod default) — Mongoose defaults them

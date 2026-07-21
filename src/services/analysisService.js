@@ -124,6 +124,8 @@ async function assembleModel(projectId) {
       nodeB: e.nodeB,
       sectionId: String(e.frameSectionId),
       roll: e.roll != null ? e.roll : 0, // section orientation angle (degrees)
+      // End releases (SAP2000 "Frame Releases"); omitted => fixed ends.
+      ...(e.releases ? { releases: e.releases } : {}),
     }));
 
   const assignedIds = new Set(solverElements.map((e) => e.id));
