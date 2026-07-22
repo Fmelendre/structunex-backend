@@ -113,6 +113,10 @@ const area = z.object({
 // Project holds metadata only; the structural model is built incrementally via
 // the sub-resource routes. ownerId is NOT accepted from the client — the server
 // derives it from the authenticated Clerk user (req.userId).
+// Ojo: Zod descarta las claves que no estén declaradas aquí, así que un
+// parámetro nuevo en el asistente del frontend (data/templates.ts) se perdería
+// en silencio al guardar y el visor regeneraría la geometría con el valor por
+// defecto. Toda clave de ModelParams debe tener su entrada en este schema.
 const modelParamsSchema = z
   .object({
     length: z.number().optional(),
@@ -123,6 +127,10 @@ const modelParamsSchema = z
     supports: z.string().optional(),
     width: z.number().optional(),
     depth: z.number().optional(),
+    // Rejilla del pórtico 3D: vanos por dirección y número de plantas.
+    baysX: z.number().int().optional(),
+    baysY: z.number().int().optional(),
+    stories: z.number().int().optional(),
   })
   .partial();
 
