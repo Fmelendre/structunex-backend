@@ -6,6 +6,7 @@ const { ModelLoad } = require("./modelLoadModel");
 const { ModelArea } = require("./modelAreaModel");
 const { ModelFrameLoad } = require("./modelFrameLoadModel");
 const { ModelAreaLoad } = require("./modelAreaLoadModel");
+const { ModelAreaSpring } = require("./modelAreaSpringModel");
 const { ModelConfiguration } = require("./modelConfigurationModel");
 const { Result } = require("./resultModel");
 const { CatalogMaterial } = require("./catalogMaterialModel");
@@ -25,6 +26,7 @@ const CHILD_MODELS = [
   { key: "areas", Model: ModelArea },
   { key: "frameLoads", Model: ModelFrameLoad },
   { key: "areaLoads", Model: ModelAreaLoad },
+  { key: "areaSprings", Model: ModelAreaSpring },
 ];
 
 module.exports = {
@@ -36,6 +38,7 @@ module.exports = {
   ModelArea,
   ModelFrameLoad,
   ModelAreaLoad,
+  ModelAreaSpring,
   ModelConfiguration,
   Result,
   CatalogMaterial,

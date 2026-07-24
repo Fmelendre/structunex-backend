@@ -7,6 +7,7 @@ const {
   area,
   frameLoad,
   areaLoad,
+  areaSpring,
 } = require("./projectSchema");
 
 // Configuración no-geométrica del modelo (grid + defaults). Un único doc por
@@ -65,9 +66,15 @@ const modalCase = z.object({
   minModes: z.number().int().positive(),
 });
 
+// GDL disponibles elegidos por el usuario (Analizar → Opciones de análisis,
+// estilo SAP2000 "Available DOFs"). null/ausente = automático (se deducen de la
+// formulación del proyecto o de la geometría).
+const dofKey = z.enum(["UX", "UY", "UZ", "RX", "RY", "RZ"]);
+
 const configuration = z
   .object({
     gridSystem: gridSystem.nullable().optional(),
+    activeDofs: z.array(dofKey).nullable().optional(),
     defaultFrameSectionId: z.string().nullable().optional(),
     defaultAreaSectionId: z.string().nullable().optional(),
     loadPatterns: z.array(loadPattern).optional(),
@@ -89,6 +96,7 @@ const modelSchema = z
     areas: z.array(area).optional(),
     frameLoads: z.array(frameLoad).optional(),
     areaLoads: z.array(areaLoad).optional(),
+    areaSprings: z.array(areaSpring).optional(),
     configuration: configuration.optional(),
   })
   .strict();

@@ -115,6 +115,14 @@ const modelConfigurationSchema = new Schema(
     loadCombinations: { type: [loadCombinationSchema], default: [] },
     massSource: { type: massSourceSchema, default: null },
     modalCases: { type: [modalCaseSchema], default: [] },
+    // GDL disponibles elegidos por el usuario (Analizar → Opciones de análisis,
+    // estilo SAP2000 "Available DOFs"). null = automático: se deducen de la
+    // formulación del proyecto y, a falta de ella, de la geometría.
+    activeDofs: {
+      type: [String],
+      enum: ["UX", "UY", "UZ", "RX", "RY", "RZ"],
+      default: null,
+    },
     // Defaults aplicados a lo que se dibuja (referencian el catálogo). Se
     // consumen en la Etapa B (elementos/áreas referencian el catálogo).
     defaultFrameSectionId: { type: String, default: null },

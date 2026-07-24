@@ -9,6 +9,7 @@ const {
   ModelArea,
   ModelFrameLoad,
   ModelAreaLoad,
+  ModelAreaSpring,
   ModelConfiguration,
   CatalogFrameSection,
   CatalogAreaSection,
@@ -31,8 +32,16 @@ const ALL_DOFS = ["UX", "UY", "UZ", "RX", "RY", "RZ"];
 // no stiffness (v1): they pass through only to lump their surface loads to the
 // boundary nodes.
 async function assembleModel(projectId) {
-  const [nodes, elements, supports, loads, areas, frameLoads, areaLoads] =
-    await Promise.all([
+  const [
+    nodes,
+    elements,
+    supports,
+    loads,
+    areas,
+    frameLoads,
+    areaLoads,
+    areaSprings,
+  ] = await Promise.all([
       ModelNode.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
       ModelElement.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
       ModelSupport.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
@@ -40,6 +49,7 @@ async function assembleModel(projectId) {
       ModelArea.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
       ModelFrameLoad.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
       ModelAreaLoad.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
+      ModelAreaSpring.find({ projectId }).select("-_id -projectId -__v -createdAt -updatedAt").lean(),
     ]);
 
   const assigned = elements.filter(
@@ -129,6 +139,7 @@ async function assembleModel(projectId) {
     }));
 
   const assignedIds = new Set(solverElements.map((e) => e.id));
+  const areaIds = new Set(areas.map((a) => a.id));
 
   // Guard: hay barras dibujadas pero ninguna llega al solver porque su sección
   // no está asignada o ya no existe en el catálogo (p. ej. tras renombrar/borrar
@@ -157,6 +168,12 @@ async function assembleModel(projectId) {
     frameLoads: frameLoads.filter((fl) => assignedIds.has(fl.elementId)),
     areas,
     areaLoads,
+    // Resortes de superficie (balasto). El motor exige stiffness > 0 y un área
+    // existente; un resorte huérfano (su área se borró) o con rigidez cero no
+    // aporta nada y provocaría un 422, así que se filtra aquí.
+    areaSprings: areaSprings.filter(
+      (s) => s.stiffness > 0 && areaIds.has(s.areaId)
+    ),
     areaSections,
   };
 }

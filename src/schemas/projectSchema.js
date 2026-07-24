@@ -90,6 +90,17 @@ const areaLoad = z.object({
   value: z.number().optional(),
 });
 
+// Resorte de superficie sobre un área (SAP2000 "Assign ▸ Area ▸ Springs"): el
+// módulo de balasto del terreno bajo una losa de cimentación, en kN/m³. Sin
+// loadPattern: la rigidez es del modelo, no de un caso de carga.
+const areaSpring = z.object({
+  areaId: z.string().min(1),
+  stiffness: z.number().nonnegative(),
+  resists: z.enum(["compressionOnly", "tensionOnly", "both"]).optional(),
+  face: z.enum(["bottom", "top"]).optional(),
+  outward: z.boolean().optional(),
+});
+
 // Elemento de área (muro/losa/shell), definido por sus nodos de contorno.
 // sectionId (Area Section del catálogo) es opcional: un área puede dibujarse y
 // persistirse antes de asignarle sección.
@@ -160,6 +171,7 @@ module.exports = {
   area,
   frameLoad,
   areaLoad,
+  areaSpring,
   createProjectSchema,
   updateProjectMetaSchema,
 };

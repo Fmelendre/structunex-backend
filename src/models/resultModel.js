@@ -24,6 +24,10 @@ const resultSchema = new Schema(
     // field simply disappears from the UI (no mesh, no modes) with no error anywhere.
     meshAreas: { type: Schema.Types.Mixed, default: undefined },
     modes: { type: Array, default: [] },
+    // Grounded springs (node, DOF, which way compresses). The client tests slab
+    // uplift on its load combinations with these; dropped here, that check would
+    // silently never fire.
+    springs: { type: Array, default: [] },
   },
   { collection: "results", timestamps: true, minimize: false }
 );
