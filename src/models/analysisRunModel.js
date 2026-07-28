@@ -67,6 +67,14 @@ const analysisRunSchema = new Schema(
     springs: { type: String, default: null },
     bytes: { type: Number, default: 0 },
 
+    // Máximos por caso y deriva entre plantas. Los calcula el calc-service y viajan en
+    // el manifiesto; se guardan aquí para que la sección Analysis pinte el resumen sin
+    // bajar un solo byte de Parquet.
+    summary: {
+      type: summarySchema,
+      default: () => ({ perCase: [], drift: [] }),
+    },
+
     // Fingerprint of the model that was solved, so the UI can tell whether a stored
     // run still matches the geometry on screen or went stale when the user edited it.
     modelHash: { type: String, default: null },

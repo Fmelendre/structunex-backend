@@ -17,6 +17,7 @@
 const { Project, AnalysisRun } = require("../models");
 const { analyzeModelStream } = require("./calcService");
 const s3Service = require("./s3Service");
+const { env } = require("../config/env");
 const { AppError } = require("../middleware/errorHandler");
 
 // projectId -> AbortController for the in-flight run, so cancel() can hang up.
@@ -149,8 +150,21 @@ async function start(projectId, payload) {
   // Deliberately not awaited: the HTTP response goes out now.
   (async () => {
     try {
+      // El destino va en la petición, no en la config del calc-service: este servicio
+      // es compartido (local, staging y producción llaman al mismo), y solo NOSOTROS
+      // sabemos dónde vamos a buscar luego los resultados, porque somos quienes
+      // firmamos las descargas. Si cada lado tiene su propio AWS_S3_BUCKET, la
+      // escritura va bien y la lectura da un 404 sin rastro en ningún log.
       const { manifest } = await analyzeModelStream(
-        { ...payload, storage: { projectId: key, runId: String(run._id) } },
+        {
+          ...payload,
+          storage: {
+            projectId: key,
+            runId: String(run._id),
+            bucket: env.s3Bucket,
+            prefix: env.s3Prefix,
+          },
+        },
         {
           signal: controller.signal,
           onProgress: (e) => {
