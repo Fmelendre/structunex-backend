@@ -62,6 +62,9 @@ const analysisRunSchema = new Schema(
     modes: { type: Array, default: [] },
     mesh: { type: Schema.Types.Mixed, default: {} },
     modeShapes: { type: String, default: null },
+    // Resortes de balasto: son rigidez, no resultado, así que se escriben una vez por
+    // ejecución. null cuando el modelo no lleva resortes de área.
+    springs: { type: String, default: null },
     bytes: { type: Number, default: 0 },
 
     // Fingerprint of the model that was solved, so the UI can tell whether a stored

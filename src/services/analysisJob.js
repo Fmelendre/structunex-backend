@@ -86,6 +86,7 @@ async function saveManifest(run, manifest) {
         modes: manifest.modes ?? [],
         mesh: manifest.mesh ?? {},
         modeShapes: manifest.modeShapes ?? null,
+        springs: manifest.springs ?? null,
         bytes: manifest.bytes?.total ?? 0,
         summary: manifest.summary ?? { perCase: [], drift: [] },
       },

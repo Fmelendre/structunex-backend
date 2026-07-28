@@ -24,7 +24,7 @@ const s3Service = require("./s3Service");
 // prefirmada (ver signCase más abajo).
 const RUN_FIELDS =
   "status startedAt solvedAt durationMs error activeDofs notes cases counts modes " +
-  "mesh modeShapes bytes summary schemaVersion";
+  "mesh modeShapes springs bytes summary schemaVersion";
 
 const ALL_DOFS = ["UX", "UY", "UZ", "RX", "RY", "RZ"];
 
@@ -324,7 +324,7 @@ async function signCase(projectId, runId, caseKey) {
     throw new AppError(404, "Ejecución no encontrada");
   }
   const run = await AnalysisRun.findOne({ _id: runId, projectId })
-    .select("status cases mesh modeShapes")
+    .select("status cases mesh modeShapes springs")
     .lean();
   if (!run || run.status !== "solved") {
     throw new AppError(404, "Ejecución no encontrada");
@@ -340,6 +340,7 @@ async function signCase(projectId, runId, caseKey) {
     paths[`mesh_${name}`] = relative;
   }
   if (run.modeShapes) paths.mode_shapes = run.modeShapes;
+  if (run.springs) paths.springs = run.springs;
 
   return {
     case: { name: entry.name, key: entry.key },
