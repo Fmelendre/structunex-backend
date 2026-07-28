@@ -8,7 +8,7 @@ const { ModelFrameLoad } = require("./modelFrameLoadModel");
 const { ModelAreaLoad } = require("./modelAreaLoadModel");
 const { ModelAreaSpring } = require("./modelAreaSpringModel");
 const { ModelConfiguration } = require("./modelConfigurationModel");
-const { Result } = require("./resultModel");
+const { AnalysisRun } = require("./analysisRunModel");
 const { CatalogMaterial } = require("./catalogMaterialModel");
 const { CatalogFrameSection } = require("./catalogFrameSectionModel");
 const { CatalogAreaSection } = require("./catalogAreaSectionModel");
@@ -40,7 +40,7 @@ module.exports = {
   ModelAreaLoad,
   ModelAreaSpring,
   ModelConfiguration,
-  Result,
+  AnalysisRun,
   CatalogMaterial,
   CatalogFrameSection,
   CatalogAreaSection,

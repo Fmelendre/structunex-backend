@@ -27,6 +27,10 @@ const areaSchema = new Schema(
     // Local axes orientation about the normal (local 3), in degrees (SAP2000 area
     // "local axis angle"). Default 0.
     localAxisAngle: { type: Number, default: 0 },
+    // Name of the rigid diaphragm this area belongs to (SAP2000 "Diaphragm"
+    // constraint), referencing ModelConfiguration.diaphragms[].name. Areas sharing a
+    // name form one rigid floor. null = no constraint.
+    diaphragm: { type: String, default: null },
   },
   { collection: "model_areas", timestamps: true }
 );

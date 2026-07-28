@@ -101,7 +101,12 @@ async function analyzeModelStream(request, { onProgress, signal } = {}) {
         return; // a partial/garbled line is not worth killing the run over
       }
       if (event.type === "progress" && onProgress) onProgress(event);
-      else if (event.type === "result") finish(resolve, event.data);
+      // El evento "result" viene en dos sabores: con `manifest` cuando el
+      // calc-service ha escrito el Parquet en S3 (~1 KB), o con `data` (el resultado
+      // entero) cuando la petición no llevaba destino de almacenamiento.
+      else if (event.type === "result") {
+        finish(resolve, { manifest: event.manifest ?? null, data: event.data ?? null });
+      }
       else if (event.type === "error") {
         const detail = event.detail;
         const message =

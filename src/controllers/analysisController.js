@@ -1,4 +1,4 @@
-const { asyncHandler } = require("../middleware/errorHandler");
+const { AppError, asyncHandler } = require("../middleware/errorHandler");
 const analysisService = require("../services/analysisService");
 
 // req.project / req.projectId are set by loadProject.
@@ -21,4 +21,20 @@ const cancel = asyncHandler(async (req, res) => {
   res.json({ cancelled });
 });
 
-module.exports = { run, get, cancel };
+const listRuns = asyncHandler(async (req, res) => {
+  res.json(await analysisService.listRuns(req.projectId));
+});
+
+// URL prefirmadas de las particiones de un caso de carga. La propiedad del proyecto ya
+// la ha comprobado loadProject, así que aquí basta con firmar.
+const caseUrls = asyncHandler(async (req, res) => {
+  const caseKey = req.query.case;
+  if (!caseKey) {
+    throw new AppError(400, "Falta el parámetro 'case'");
+  }
+  res.json(
+    await analysisService.signCase(req.projectId, req.params.runId, String(caseKey))
+  );
+});
+
+module.exports = { run, get, cancel, listRuns, caseUrls };

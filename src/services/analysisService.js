@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const {
   Project,
-  Result,
+  AnalysisRun,
   ModelNode,
   ModelElement,
   ModelSupport,
@@ -17,6 +17,14 @@ const {
 } = require("../models");
 const { AppError } = require("../middleware/errorHandler");
 const analysisJob = require("./analysisJob");
+const s3Service = require("./s3Service");
+
+// Lo que se devuelve de una ejecución: metadatos y resumen, nunca el payload. Los
+// resultados pesados están en S3 en Parquet y los baja el navegador con una URL
+// prefirmada (ver signCase más abajo).
+const RUN_FIELDS =
+  "status startedAt solvedAt durationMs error activeDofs notes cases counts modes " +
+  "mesh modeShapes bytes summary schemaVersion";
 
 const ALL_DOFS = ["UX", "UY", "UZ", "RX", "RY", "RZ"];
 
@@ -246,17 +254,26 @@ async function run(project, options) {
 // restarted (deploy, routine cycling) while the job was in flight.
 const STALE_MS = 5 * 60 * 1000;
 
-// Current analysis state + live progress + last result for a project.
+const latestSolvedRun = (projectId) =>
+  AnalysisRun.findOne({ projectId, status: "solved" })
+    .sort({ startedAt: -1 })
+    .select(RUN_FIELDS)
+    .lean();
+
+// Current analysis state + live progress + metadata of the last solved run.
+//
+// This used to inline the entire result document, which the frontend polls once a
+// second while solving — so every tick re-read and re-serialised megabytes it only
+// used on the final tick. Now the response is under a kilobyte and the payload is
+// fetched once, straight from S3.
 async function get(projectId) {
-  const [project, result] = await Promise.all([
+  const [project, run] = await Promise.all([
     Project.findById(projectId)
       .select("status analysisProgress analysisError")
       .lean(),
-    Result.findOne({ projectId })
-      .select("-_id -projectId -__v -createdAt -updatedAt")
-      .lean(),
+    latestSolvedRun(projectId),
   ]);
-  if (!project) return { status: null, progress: null, error: null, result: null };
+  if (!project) return { status: null, progress: null, error: null, run: null };
 
   const progress = project.analysisProgress || null;
 
@@ -272,10 +289,10 @@ async function get(projectId) {
     const message = "El análisis se interrumpió (el servidor se reinició). Vuelve a lanzarlo.";
     await analysisJob.settleFailure(projectId, message).catch(() => {});
     return {
-      status: result ? "solved" : "draft",
+      status: run ? "solved" : "draft",
       progress: null,
       error: message,
-      result: result || null,
+      run: run || null,
     };
   }
 
@@ -283,7 +300,51 @@ async function get(projectId) {
     status: project.status,
     progress,
     error: project.analysisError || null,
-    result: result || null,
+    run: run || null,
+  };
+}
+
+/** Historial de ejecuciones del proyecto, de la más reciente a la más antigua. */
+async function listRuns(projectId) {
+  return AnalysisRun.find({ projectId })
+    .sort({ startedAt: -1 })
+    .select(RUN_FIELDS)
+    .lean();
+}
+
+/**
+ * URL prefirmadas de un caso de carga: sus particiones más la malla, firmadas de una
+ * tacada porque el visor las necesita todas juntas para pintar.
+ *
+ * `caseKey` es la clave que guardó el manifiesto, NO el nombre del patrón: el slug
+ * resuelve colisiones con un ordinal, así que el nombre no permite reconstruirla.
+ */
+async function signCase(projectId, runId, caseKey) {
+  if (!mongoose.isValidObjectId(runId)) {
+    throw new AppError(404, "Ejecución no encontrada");
+  }
+  const run = await AnalysisRun.findOne({ _id: runId, projectId })
+    .select("status cases mesh modeShapes")
+    .lean();
+  if (!run || run.status !== "solved") {
+    throw new AppError(404, "Ejecución no encontrada");
+  }
+
+  const entry = run.cases.find((c) => c.key === caseKey);
+  if (!entry) {
+    throw new AppError(404, `El caso '${caseKey}' no existe en esta ejecución`);
+  }
+
+  const paths = { ...entry.files };
+  for (const [name, relative] of Object.entries(run.mesh || {})) {
+    paths[`mesh_${name}`] = relative;
+  }
+  if (run.modeShapes) paths.mode_shapes = run.modeShapes;
+
+  return {
+    case: { name: entry.name, key: entry.key },
+    expiresIn: require("../config/env").env.s3UrlTtlS,
+    urls: await s3Service.signRunPaths(projectId, runId, paths),
   };
 }
 
@@ -293,4 +354,4 @@ function cancel(projectId) {
   return analysisJob.cancel(projectId);
 }
 
-module.exports = { run, get, cancel, assembleModel };
+module.exports = { run, get, cancel, listRuns, signCase, assembleModel };

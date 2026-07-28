@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
-const { Project, Result, ModelConfiguration, CHILD_MODELS } = require("../models");
+const {
+  Project,
+  AnalysisRun,
+  ModelConfiguration,
+  CHILD_MODELS,
+} = require("../models");
+const s3Service = require("./s3Service");
 
 // Project metadata only. The structural model lives in the child collections
 // and is managed through the per-entity sub-resource routes. Ownership is
@@ -60,8 +66,13 @@ async function updateProject(project, patch) {
   return project;
 }
 
-// Deletes the project and every child collection + result in one transaction,
+// Deletes the project and every child collection + analysis run in one transaction,
 // so no orphaned documents remain.
+//
+// The Parquet results in S3 cannot join the transaction, so they go afterwards and
+// best-effort: if that delete fails the documents are already gone and the bucket's
+// lifecycle rule is what eventually reclaims the objects. Doing it before the commit
+// would be worse — a rolled-back transaction would have destroyed live results.
 async function deleteProject(projectId) {
   const session = await mongoose.startSession();
   try {
@@ -72,13 +83,14 @@ async function deleteProject(projectId) {
           Model.deleteMany({ projectId }, { session })
         ),
         ModelConfiguration.deleteMany({ projectId }, { session }),
-        Result.deleteMany({ projectId }, { session }),
+        AnalysisRun.deleteMany({ projectId }, { session }),
       ]);
     });
-    return { deleted: true };
   } finally {
     session.endSession();
   }
+  await s3Service.deleteProjectResults(projectId).catch(() => {});
+  return { deleted: true };
 }
 
 module.exports = {

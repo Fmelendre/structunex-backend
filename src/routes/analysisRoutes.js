@@ -3,8 +3,13 @@ const c = require("../controllers/analysisController");
 
 const router = Router({ mergeParams: true });
 
-router.get("/", c.get); // current status + live progress + last result
-router.post("/", c.run); // start the solver (202; poll GET for progress)
-router.delete("/", c.cancel); // hang up on a running analysis
+// requireAuth + loadProject ya vienen heredados de projectRoutes, así que la propiedad
+// del proyecto está comprobada antes de llegar aquí — incluido antes de firmar una URL.
+router.get("/", c.get); // status + progreso + metadatos de la última ejecución
+router.post("/", c.run); // lanza el solver (202; el progreso se consulta con GET)
+router.delete("/", c.cancel); // cuelga un análisis en curso
+
+router.get("/runs", c.listRuns); // historial de ejecuciones
+router.get("/runs/:runId/urls", c.caseUrls); // URL prefirmadas de un caso (?case=clave)
 
 module.exports = router;

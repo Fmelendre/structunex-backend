@@ -119,6 +119,9 @@ const area = z.object({
   // Orientación de los ejes locales alrededor de la normal (eje local 3), en grados
   // (ángulo "local axis" estilo SAP2000). Por defecto 0.
   localAxisAngle: z.number().optional(),
+  // Diafragma rígido al que pertenece el área: referencia por nombre a
+  // configuration.diaphragms[].name. null = sin diafragma.
+  diaphragm: z.string().min(1).nullish(),
 });
 
 // Project holds metadata only; the structural model is built incrementally via

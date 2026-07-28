@@ -46,6 +46,17 @@ const loadPatternSchema = new Schema(
   { _id: false }
 );
 
+// Diafragmas rígidos con nombre (Assign ▸ Área ▸ Diafragma, estilo SAP2000
+// "Diaphragm constraint"). Aquí viven solo las definiciones; la asignación es el
+// campo `diaphragm` de cada área, que referencia este `name` — igual que las
+// cargas referencian loadPatterns[].name.
+const diaphragmSchema = new Schema(
+  {
+    name: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 // Load Combinations (Define → Load Combinations, estilo SAP2000): suma lineal
 // de patrones con factor. `pattern` referencia loadPatterns[].name.
 const comboFactorSchema = new Schema(
@@ -115,6 +126,7 @@ const modelConfigurationSchema = new Schema(
     loadCombinations: { type: [loadCombinationSchema], default: [] },
     massSource: { type: massSourceSchema, default: null },
     modalCases: { type: [modalCaseSchema], default: [] },
+    diaphragms: { type: [diaphragmSchema], default: [] },
     // GDL disponibles elegidos por el usuario (Analizar → Opciones de análisis,
     // estilo SAP2000 "Available DOFs"). null = automático: se deducen de la
     // formulación del proyecto y, a falta de ella, de la geometría.

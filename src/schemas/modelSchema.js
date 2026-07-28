@@ -66,6 +66,10 @@ const modalCase = z.object({
   minModes: z.number().int().positive(),
 });
 
+// Diafragma rígido con nombre (Assign ▸ Área ▸ Diafragma). Solo la definición: las
+// áreas se enganchan por `area.diaphragm === name`.
+const diaphragm = z.object({ name: z.string().min(1) });
+
 // GDL disponibles elegidos por el usuario (Analizar → Opciones de análisis,
 // estilo SAP2000 "Available DOFs"). null/ausente = automático (se deducen de la
 // formulación del proyecto o de la geometría).
@@ -81,6 +85,7 @@ const configuration = z
     loadCombinations: z.array(loadCombination).optional(),
     massSource: massSource.nullable().optional(),
     modalCases: z.array(modalCase).optional(),
+    diaphragms: z.array(diaphragm).optional(),
   })
   .strict();
 
