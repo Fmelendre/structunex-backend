@@ -75,6 +75,11 @@ const analysisRunSchema = new Schema(
       default: () => ({ perCase: [], drift: [] }),
     },
 
+    // Masa, centro de masa y centro de rigidez por planta (no depende del caso de
+    // carga). Igual que `modes`: el calc-service ya lo manda calculado en el
+    // manifiesto, aquí solo se guarda.
+    stories: { type: Array, default: [] },
+
     // Fingerprint of the model that was solved, so the UI can tell whether a stored
     // run still matches the geometry on screen or went stale when the user edited it.
     modelHash: { type: String, default: null },

@@ -90,6 +90,7 @@ async function saveManifest(run, manifest) {
         springs: manifest.springs ?? null,
         bytes: manifest.bytes?.total ?? 0,
         summary: manifest.summary ?? { perCase: [], drift: [] },
+        stories: manifest.stories ?? [],
       },
     }
   );

@@ -24,7 +24,7 @@ const s3Service = require("./s3Service");
 // prefirmada (ver signCase más abajo).
 const RUN_FIELDS =
   "status startedAt solvedAt durationMs error activeDofs notes cases counts modes " +
-  "mesh modeShapes springs bytes summary schemaVersion";
+  "mesh modeShapes springs bytes summary schemaVersion stories";
 
 const ALL_DOFS = ["UX", "UY", "UZ", "RX", "RY", "RZ"];
 
