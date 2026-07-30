@@ -1,0 +1,105 @@
+{
+  "_meta": {
+    "fuente": "COVENIN 1756-1:2001 Edificaciones Sismorresistentes, Parte 1: Requisitos (edición impresa FONDONORMA, transcripción verificada)",
+    "advertencia": "Datos extraídos y verificados manualmente contra el escaneo oficial. Herramienta educativa: verifique siempre contra la norma."
+  },
+  "zonas": [
+    { "zona": 7, "Ao": 0.40, "peligro": "Elevado" },
+    { "zona": 6, "Ao": 0.35, "peligro": "Elevado" },
+    { "zona": 5, "Ao": 0.30, "peligro": "Elevado" },
+    { "zona": 4, "Ao": 0.25, "peligro": "Intermedio" },
+    { "zona": 3, "Ao": 0.20, "peligro": "Intermedio" },
+    { "zona": 2, "Ao": 0.15, "peligro": "Bajo" },
+    { "zona": 1, "Ao": 0.10, "peligro": "Bajo" },
+    { "zona": 0, "Ao": null, "peligro": "Bajo" }
+  ],
+  "aceleracionVertical": 0.7,
+  "formasEspectrales": {
+    "S1": { "Tstar": 0.4, "beta": 2.4, "p": 1.0 },
+    "S2": { "Tstar": 0.7, "beta": 2.6, "p": 1.0 },
+    "S3": { "Tstar": 1.0, "beta": 2.8, "p": 1.0 },
+    "S4": { "Tstar": 1.3, "beta": 3.0, "p": 0.8 }
+  },
+  "To_factor": 0.25,
+  "Tplus": { "regla": "R<5: 0.1(R-1) ; R>=5: 0.4", "nota": "To <= T+" },
+  "alpha": { "A": 1.30, "B1": 1.15, "B2": 1.00 },
+  "tabla51": {
+    "titulo": "TABLA 5.1 — Forma espectral y factor de corrección φ",
+    "columnas": ["Material", "Vsp (m/s)", "H (m)", "Zonas 1-4: Forma", "Zonas 1-4: φ", "Zonas 5-7: Forma", "Zonas 5-7: φ"],
+    "filas": [
+      { "id": "roca-sana", "material": "Roca sana/fracturada", "vsp": ">500", "h": "-", "z14": ["S1", 0.85], "z57": ["S1", 1.00] },
+      { "id": "roca-blanda-1", "material": "Roca blanda o meteorizada y suelos muy duros o muy densos", "vsp": ">400", "h": "<30", "z14": ["S1", 0.85], "z57": ["S1", 1.00] },
+      { "id": "roca-blanda-2", "material": "Roca blanda o meteorizada y suelos muy duros o muy densos", "vsp": ">400", "h": "30-50", "z14": ["S2", 0.80], "z57": ["S2", 0.90] },
+      { "id": "roca-blanda-3", "material": "Roca blanda o meteorizada y suelos muy duros o muy densos", "vsp": ">400", "h": ">50", "z14": ["S3", 0.70], "z57": ["S2", 0.90] },
+      { "id": "duros-1", "material": "Suelos duros o densos", "vsp": "250-400", "h": "<15", "z14": ["S1", 0.80], "z57": ["S1", 1.00] },
+      { "id": "duros-2", "material": "Suelos duros o densos", "vsp": "250-400", "h": "15-50", "z14": ["S2", 0.80], "z57": ["S2", 0.90] },
+      { "id": "duros-3", "material": "Suelos duros o densos", "vsp": "250-400", "h": ">50", "z14": ["S3", 0.75], "z57": ["S2", 0.90] },
+      { "id": "firmes-1", "material": "Suelos firmes / medio densos", "vsp": "170-250", "h": "≤50", "z14": ["S3", 0.70], "z57": ["S2", 0.95] },
+      { "id": "firmes-2", "material": "Suelos firmes / medio densos", "vsp": "170-250", "h": ">50", "z14": ["S3(a)", 0.70], "z57": ["S3", 0.75] },
+      { "id": "blandos-1", "material": "Suelos blandos / sueltos", "vsp": "<170", "h": "≤15", "z14": ["S3", 0.70], "z57": ["S2", 0.90] },
+      { "id": "blandos-2", "material": "Suelos blandos / sueltos", "vsp": "<170", "h": ">15", "z14": ["S3(a)", 0.70], "z57": ["S3", 0.80] },
+      { "id": "intercalados", "material": "Suelos blandos o sueltos(b) intercalados con suelos más rígidos", "vsp": "-", "h": "H1", "z14": ["S2(c)", 0.65], "z57": ["S2", 0.70] }
+    ],
+    "notas": {
+      "a": "Si Ao ≤ 0.15 úsese S4",
+      "b": "El espesor de los estratos blandos o sueltos (Vsp<170 m/s) debe ser mayor que 0.1 H",
+      "c": "Si H1 ≥ 0.25 H y Ao ≤ 0.20 úsese S3"
+    }
+  },
+  "R": {
+    "concreto": {
+      "nombre": "Estructuras de concreto armado",
+      "ND3": { "I": 6.0, "II": 5.0, "III": 4.5, "IIIa": 5.0, "IV": 2.0 },
+      "ND2": { "I": 4.0, "II": 3.5, "III": 3.0, "IIIa": 3.5, "IV": 1.5 },
+      "ND1": { "I": 2.0, "II": 1.75, "III": 1.5, "IIIa": 2.0, "IV": 1.25 },
+      "notas": []
+    },
+    "acero": {
+      "nombre": "Estructuras de acero",
+      "ND3": { "I": 6.0, "II": 5.0, "III": 4.0, "IIIa": 6.0, "IV": 2.0 },
+      "ND2": { "I": 4.5, "II": 4.0, "III": null, "IIIa": null, "IV": 1.5 },
+      "ND1": { "I": 2.5, "II": 2.25, "III": 2.0, "IIIa": null, "IV": 1.25 },
+      "notas": [
+        "(1) Tipo I: para sistemas con columnas articuladas en su base el valor de R será multiplicado por 0.75",
+        "(2) ND3-I: en pórticos con vigas de celosía se usará 5.0, limitado a edificios de no más de 30 metros de altura",
+        "(3) ND3-IIIa: donde la conexión viga colectora-columna sea del Tipo PR (COVENIN 1618-98), úsese 5.0"
+      ]
+    },
+    "mixtas": {
+      "nombre": "Estructuras mixtas acero-concreto",
+      "ND3": { "I": 6.0, "II": 5.0, "III": 4.0, "IIIa": 6.0, "IV": 2.0 },
+      "ND2": { "I": 4.0, "II": 4.0, "III": null, "IIIa": null, "IV": 1.5 },
+      "ND1": { "I": 2.25, "II": 2.50, "III": 2.25, "IIIa": null, "IV": 1.0 },
+      "notas": [
+        "(1) ND3-IIIa: para muros estructurales reforzados con planchas de acero y miembros de borde de sección mixta acero-concreto, úsese 5.0"
+      ]
+    },
+    "minoracion": "Para irregularidades a.4, b.1 y b.2 (Sección 6.5.2) y sistemas Tipo I con columnas articuladas en su base: R × 0.75 (no menor que 1.0). Para irregularidades a.1, a.2, a.7, a.8, a.9: solicitaciones × 1.3 en el entrepiso de la irregularidad y los inferiores."
+  },
+  "tiposEstructurales": {
+    "I": "Pórticos: resisten la totalidad de las acciones sísmicas mediante vigas y columnas. Ejes de columnas continuos hasta la fundación.",
+    "II": "Combinación de pórticos y muros/pórticos diagonalizados (mismo Nivel de Diseño). Los pórticos solos deben resistir al menos el 25% de las fuerzas sísmicas.",
+    "III": "Pórticos diagonalizados o muros estructurales que resisten la totalidad de las acciones sísmicas (sistemas de muros).",
+    "IIIa": "Muros de concreto acoplados con dinteles o vigas dúctiles; pórticos de acero con diagonales excéntricas acopladas con eslabones dúctiles.",
+    "IV": "Sin diafragmas eficaces; estructuras sobre una sola columna; losas sin vigas."
+  },
+  "derivas": {
+    "titulo": "TABLA 10.1 — Valores límites de δi/(hi−hi−1)",
+    "susceptibles": { "A": 0.012, "B1": 0.015, "B2": 0.018 },
+    "noSusceptibles": { "A": 0.016, "B1": 0.020, "B2": 0.024 },
+    "ec101": "Δi = 0.8 R Δei"
+  },
+  "periodo": {
+    "Ct": { "concreto": 0.07, "mixtas": 0.07, "acero": 0.08 },
+    "exponente": 0.75,
+    "tipoII_III_IV": 0.05,
+    "limiteCalculado": 1.4,
+    "nota": "Ta = Ct·hn^0.75 (Tipo I, ec. 9.6); Ta = 0.05·hn^0.75 (Tipos II, III y IV, ec. 9.7). T calculado (ec. 9.4) ≤ 1.4·Ta."
+  },
+  "cortanteBasal": {
+    "ec91": "Vo = μ·Ad·W",
+    "mu1": "1.4·(N+9)/(2N+12)",
+    "mu2": "0.80 + (1/20)·(T/T* − 1)",
+    "coefMinimo": "Vo/W ≥ (α·φ·Ao)/R  (Artículo 7.1)"
+  }
+}

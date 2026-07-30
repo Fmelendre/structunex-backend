@@ -1,0 +1,253 @@
+{
+  "_meta": {
+    "source": "ASCE/SEI 7-22 «Minimum Design Loads and Associated Criteria for Buildings and Other Structures», Chapters 1, 11, 12 and 20 (U.S. seismic design standard, referenced by IBC 2024)",
+    "standard": "ASCE/SEI 7-22",
+    "country": "United States",
+    "units": "U.S. customary (ft, ft/s) with metric equivalent (m, m/s) where applicable; spectral accelerations as a fraction of g",
+    "warning": "Educational tool. Ground-motion parameters (Ss, S1 and the multi-period spectrum) are NOT fixed: retrieve them by coordinates from the USGS Seismic Design Geodatabase / ASCE 7 Hazard Tool. Always verify against the official standard and the governing local code (IBC)."
+  },
+
+  "groundMotion": {
+    "title": "Seismic hazard parameters",
+    "concept": "ASCE 7-22 maps the risk-targeted maximum considered earthquake (MCE_R) spectral response acceleration across the territory; each site has its own values.",
+    "mappedParameters": {
+      "Ss": "MCE_R spectral acceleration at short period (T = 0.2 s), as a fraction of g. From USGS.",
+      "S1": "MCE_R spectral acceleration at T = 1.0 s, as a fraction of g. From USGS.",
+      "SMS": "Site-adjusted MCE_R spectral acceleration at short period. In 7-22 taken from the USGS multi-period spectrum.",
+      "SM1": "Site-adjusted MCE_R spectral acceleration at T = 1.0 s. In 7-22 taken from the USGS multi-period spectrum.",
+      "PGA_M": "Site-adjusted MCE_G peak ground acceleration (for geotechnical design / liquefaction, Section 11.8)."
+    },
+    "indicativeRange": "Ss typically ranges from ~0.10 g (low-seismicity regions) to >2.0 g (California faults). These do not replace the actual site value.",
+    "retrieval": "USGS Seismic Design Geodatabase via the ASCE 7 Hazard Tool (asce7hazardtool.online) or equivalent, using coordinates and site class."
+  },
+
+  "verticalSeismic": {
+    "title": "Vertical seismic load effect",
+    "Ev": "0.2 * SDS * D  (Eq. 12.4-4a). Vertical component of the seismic action applied to dead load D.",
+    "combinations": "E = Eh +/- Ev, with Eh = rho * QE (Eqs. 12.4-1/2/3).",
+    "exception": "Ev is permitted to be taken as 0 when SDS <= 0.125 or in certain foundation design cases (12.4.2.2)."
+  },
+
+  "siteClasses": {
+    "title": "TABLE 20.2-1 — Site classes (nine classes; 7-22 added BC, CD, DE)",
+    "columns": ["Class", "Description", "Vs (ft/s)", "Vs (m/s)"],
+    "rows": [
+      { "class": "A",  "description": "Hard rock",                                 "vs_fts": ">5000",        "vs_ms": ">1524" },
+      { "class": "B",  "description": "Medium hard rock",                          "vs_fts": ">3000 to 5000","vs_ms": ">914 to 1524" },
+      { "class": "BC", "description": "Soft rock",                                 "vs_fts": ">2100 to 3000","vs_ms": ">640 to 914" },
+      { "class": "C",  "description": "Very dense sand or hard clay",              "vs_fts": ">1450 to 2100","vs_ms": ">442 to 640" },
+      { "class": "CD", "description": "Dense sand or very stiff clay",             "vs_fts": ">1000 to 1450","vs_ms": ">305 to 442" },
+      { "class": "D",  "description": "Medium dense sand or stiff clay",           "vs_fts": ">700 to 1000", "vs_ms": ">213 to 305" },
+      { "class": "DE", "description": "Loose sand or medium stiff clay",           "vs_fts": ">500 to 700",  "vs_ms": ">152 to 213" },
+      { "class": "E",  "description": "Very loose sand or soft clay",              "vs_fts": "<500",         "vs_ms": "<152" },
+      { "class": "F",  "description": "Soils requiring site response analysis (Ch. 21.1): liquefiable soils, thick/highly plastic clays, peats, organic clays", "vs_fts": "-", "vs_ms": "-" }
+    ],
+    "notes": {
+      "vs30": "Classification uses the shear-wave velocity averaged over the top 30 m (100 ft) of the profile (Vs30 / Vs-bar).",
+      "default": "Where soil properties are not known in sufficient detail, use the 'default site class': the most critical of C, CD and D, unless the authority having jurisdiction determines E or F applies (Section 20.2.1)."
+    }
+  },
+
+  "siteCoefficients": {
+    "title": "Site coefficients Fa/Fv",
+    "change": "ASCE 7-22 removes the manual multiplication by Fa (Table 11.4-1) and Fv (Table 11.4-2) from the default procedure. Site effects are already built into the USGS multi-period values.",
+    "defaultMethod": "Multi-period response spectrum (11.4.5.1): SMS, SM1 and the full spectrum are read directly from USGS for the site class, without coefficients.",
+    "alternativeMethod": "Two-period method (11.4.5.2, when multi-period data are unavailable): uses Ss, S1 and site coefficients from Tables 11.4-1/11.4-2 to obtain SMS = Fa*Ss and SM1 = Fv*S1.",
+    "note": "Fa/Fv values are not tabulated here to avoid error: they depend on the alternative-method edition and the Ss/S1 range; consult the standard if the two-period method is used."
+  },
+
+  "designSpectrum": {
+    "title": "Design response spectrum (Section 11.4.5)",
+    "designFactor": "Design parameters are 2/3 of the MCE_R values: SDS = (2/3)*SMS ; SD1 = (2/3)*SM1.",
+    "SDS": "Design spectral response acceleration, short period.",
+    "SD1": "Design spectral response acceleration at T = 1.0 s.",
+    "cornerPeriods": {
+      "T0": "0.2 * SD1 / SDS",
+      "Ts": "SD1 / SDS",
+      "TL": "Long-period transition period, mapped by region (Figures 22-14 to 22-17). Typically 4 to 16 s."
+    },
+    "twoPeriodShape": {
+      "T<T0": "Sa = SDS * (0.4 + 0.6 * T/T0)",
+      "T0<=T<=Ts": "Sa = SDS",
+      "Ts<T<=TL": "Sa = SD1 / T",
+      "T>TL": "Sa = SD1 * TL / T^2"
+    },
+    "multiPeriodShape": "Sa = 2/3 of the 5%-damped MCE_R multi-period spectrum (22 periods: 0, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 7.5, 10 s), with linear interpolation."
+  },
+
+  "riskCategory": {
+    "title": "TABLE 1.5-1 — Risk category of the building or structure",
+    "columns": ["Category", "Description"],
+    "rows": [
+      { "category": "I",   "description": "Low hazard to human life in the event of failure (agricultural, minor storage, temporary facilities)." },
+      { "category": "II",  "description": "All buildings/structures not classified as I, III or IV (typical residential and commercial)." },
+      { "category": "III", "description": "Substantial hazard to human life (large occupancy: schools, assembly >300, certain buildings) or significant economic/social impact." },
+      { "category": "IV",  "description": "Essential facilities: hospitals, fire/police stations, emergency centers, and structures housing highly toxic substances." }
+    ]
+  },
+
+  "importanceFactor": {
+    "title": "TABLE 1.5-2 — Seismic importance factor Ie",
+    "Ie": { "I": 1.00, "II": 1.00, "III": 1.25, "IV": 1.50 },
+    "note": "Ie is NOT applied to the spectrum; it enters the force calculation: Cs = Sa / (R/Ie)."
+  },
+
+  "seismicDesignCategory": {
+    "title": "TABLES 11.6-1 and 11.6-2 — Seismic Design Category (SDC A-F)",
+    "rule": "Determined from BOTH tables (by SDS and by SD1); the MORE SEVERE governs. If S1 >= 0.75 g: Risk I/II/III = E, Risk IV = F (regardless of the tables).",
+    "table_11_6_1_bySDS": {
+      "columns": ["SDS range", "Risk I/II/III", "Risk IV"],
+      "rows": [
+        { "range": "SDS < 0.167",          "I_II_III": "A", "IV": "A" },
+        { "range": "0.167 <= SDS < 0.33",  "I_II_III": "B", "IV": "C" },
+        { "range": "0.33 <= SDS < 0.50",   "I_II_III": "C", "IV": "D" },
+        { "range": "0.50 <= SDS",          "I_II_III": "D", "IV": "D" }
+      ]
+    },
+    "table_11_6_2_bySD1": {
+      "columns": ["SD1 range", "Risk I/II/III", "Risk IV"],
+      "rows": [
+        { "range": "SD1 < 0.067",          "I_II_III": "A", "IV": "A" },
+        { "range": "0.067 <= SD1 < 0.133", "I_II_III": "B", "IV": "C" },
+        { "range": "0.133 <= SD1 < 0.20",  "I_II_III": "C", "IV": "D" },
+        { "range": "0.20 <= SD1",          "I_II_III": "D", "IV": "D" }
+      ]
+    },
+    "simplifiedException": "When S1 < 0.75, the SDC may be assigned from Table 11.6-1 alone if the conditions of 11.6 are met (T < 0.8*Ts, etc.)."
+  },
+
+  "seismicForceResistingSystems": {
+    "title": "TABLE 12.2-1 — Seismic design coefficients. R (response modification), Omega0 (overstrength), Cd (deflection amplification). Selection of common systems.",
+    "categories": {
+      "bearingWall": {
+        "name": "A. Bearing wall systems",
+        "systems": [
+          { "id": "bw-special-reinforced-concrete-shear-walls", "system": "Special reinforced concrete shear walls",   "R": 5.0, "Omega0": 2.5, "Cd": 5.0 },
+          { "id": "bw-ordinary-reinforced-concrete-shear-walls", "system": "Ordinary reinforced concrete shear walls",  "R": 4.0, "Omega0": 2.5, "Cd": 4.0 },
+          { "id": "bw-special-reinforced-masonry-shear-walls", "system": "Special reinforced masonry shear walls",    "R": 5.0, "Omega0": 2.5, "Cd": 3.5 },
+          { "id": "bw-intermediate-reinforced-masonry-shear-walls", "system": "Intermediate reinforced masonry shear walls","R": 3.5, "Omega0": 2.5, "Cd": 2.25 },
+          { "id": "bw-light-frame-wood-walls-with-wood-structural-panels", "system": "Light-frame (wood) walls with wood structural panels", "R": 6.5, "Omega0": 3.0, "Cd": 4.0 }
+        ]
+      },
+      "buildingFrame": {
+        "name": "B. Building frame systems",
+        "systems": [
+          { "id": "bf-steel-eccentrically-braced-frames-ebf", "system": "Steel eccentrically braced frames (EBF)",            "R": 8.0, "Omega0": 2.0, "Cd": 4.0 },
+          { "id": "bf-steel-special-concentrically-braced-frames-scbf", "system": "Steel special concentrically braced frames (SCBF)",  "R": 6.0, "Omega0": 2.0, "Cd": 5.0 },
+          { "id": "bf-steel-ordinary-concentrically-braced-frames-ocbf", "system": "Steel ordinary concentrically braced frames (OCBF)", "R": 3.25, "Omega0": 2.0, "Cd": 3.25 },
+          { "id": "bf-steel-buckling-restrained-braced-frames-brbf", "system": "Steel buckling-restrained braced frames (BRBF)",     "R": 8.0, "Omega0": 2.5, "Cd": 5.0 },
+          { "id": "bf-steel-special-plate-shear-walls-spsw", "system": "Steel special plate shear walls (SPSW)",             "R": 7.0, "Omega0": 2.0, "Cd": 6.0 },
+          { "id": "bf-special-reinforced-concrete-shear-walls", "system": "Special reinforced concrete shear walls",            "R": 6.0, "Omega0": 2.5, "Cd": 5.0 },
+          { "id": "bf-ordinary-reinforced-concrete-shear-walls", "system": "Ordinary reinforced concrete shear walls",           "R": 5.0, "Omega0": 2.5, "Cd": 4.5 },
+          { "id": "bf-special-reinforced-masonry-shear-walls", "system": "Special reinforced masonry shear walls",             "R": 5.5, "Omega0": 2.5, "Cd": 4.0 }
+        ]
+      },
+      "momentResistingFrame": {
+        "name": "C. Moment-resisting frame systems",
+        "systems": [
+          { "id": "mf-steel-special-moment-frames-smf", "system": "Steel special moment frames (SMF)",        "R": 8.0, "Omega0": 3.0, "Cd": 5.5 },
+          { "id": "mf-steel-special-truss-moment-frames-stmf", "system": "Steel special truss moment frames (STMF)", "R": 7.0, "Omega0": 3.0, "Cd": 5.5 },
+          { "id": "mf-steel-intermediate-moment-frames-imf", "system": "Steel intermediate moment frames (IMF)",   "R": 4.5, "Omega0": 3.0, "Cd": 4.0 },
+          { "id": "mf-steel-ordinary-moment-frames-omf", "system": "Steel ordinary moment frames (OMF)",       "R": 3.5, "Omega0": 3.0, "Cd": 3.0 },
+          { "id": "mf-special-reinforced-concrete-moment-frames-smf", "system": "Special reinforced concrete moment frames (SMF)",     "R": 8.0, "Omega0": 3.0, "Cd": 5.5 },
+          { "id": "mf-intermediate-reinforced-concrete-moment-frames-imf", "system": "Intermediate reinforced concrete moment frames (IMF)","R": 5.0, "Omega0": 3.0, "Cd": 4.5 },
+          { "id": "mf-ordinary-reinforced-concrete-moment-frames-omf", "system": "Ordinary reinforced concrete moment frames (OMF)",    "R": 3.0, "Omega0": 3.0, "Cd": 2.5 }
+        ]
+      },
+      "dualWithSMF": {
+        "name": "D. Dual systems with special moment frames (capable of resisting >=25% of the seismic force)",
+        "systems": [
+          { "id": "dsmf-steel-eccentrically-braced-frames-ebf", "system": "Steel eccentrically braced frames (EBF)",           "R": 8.0, "Omega0": 2.5, "Cd": 4.0 },
+          { "id": "dsmf-steel-special-concentrically-braced-frames-scbf", "system": "Steel special concentrically braced frames (SCBF)", "R": 7.0, "Omega0": 2.5, "Cd": 5.5 },
+          { "id": "dsmf-steel-buckling-restrained-braced-frames-brbf", "system": "Steel buckling-restrained braced frames (BRBF)",    "R": 8.0, "Omega0": 2.5, "Cd": 5.0 },
+          { "id": "dsmf-steel-special-plate-shear-walls-spsw", "system": "Steel special plate shear walls (SPSW)",            "R": 8.0, "Omega0": 2.5, "Cd": 6.5 },
+          { "id": "dsmf-special-reinforced-concrete-shear-walls", "system": "Special reinforced concrete shear walls",           "R": 7.0, "Omega0": 2.5, "Cd": 5.5 }
+        ]
+      },
+      "dualWithIMF": {
+        "name": "E. Dual systems with intermediate moment frames",
+        "systems": [
+          { "id": "dimf-steel-special-concentrically-braced-frames-scbf", "system": "Steel special concentrically braced frames (SCBF)", "R": 6.0, "Omega0": 2.5, "Cd": 5.0 },
+          { "id": "dimf-special-reinforced-concrete-shear-walls", "system": "Special reinforced concrete shear walls",           "R": 6.5, "Omega0": 2.5, "Cd": 5.0 },
+          { "id": "dimf-special-reinforced-masonry-shear-walls", "system": "Special reinforced masonry shear walls",            "R": 3.5, "Omega0": 3.0, "Cd": 3.0 }
+        ]
+      }
+    },
+    "heightNote": "Each system has structural height limits (ft) by SDC (columns of Table 12.2-1): NL = no limit; NP = not permitted. General pattern: 'special' systems -> NL in SDC D/E/F; 'ordinary' steel/concrete systems -> NP in SDC D, E and F; 'intermediate' systems -> permitted with limits (e.g., 35 ft) in SDC D-F. Consult the table for the exact limit per system and SDC."
+  },
+
+  "systemDescriptions": {
+    "bearingWall": "Walls carry gravity load and resist seismic force; their failure compromises vertical support (larger penalty: lower R).",
+    "buildingFrame": "Walls or braces resist the seismic force while an independent frame carries gravity (more favorable Cd/R than bearing walls).",
+    "momentFrame": "Beams and columns with moment connections resist the entire seismic force through flexure.",
+    "dual": "Combination of moment frame (>=25% of the force) with walls or braces acting together.",
+    "invertedPendulum": "Cantilever-column / concentrated-mass-on-top systems; very low R."
+  },
+
+  "redundancy": {
+    "title": "Redundancy factor rho (Section 12.3.4)",
+    "values": { "SDC_B_C": 1.0, "SDC_D_E_F": "1.3 (reduced to 1.0 if the redundancy conditions of 12.3.4.2 are met)" },
+    "application": "Eh = rho * QE. Penalizes systems with low redundancy in higher SDCs."
+  },
+
+  "overstrength": {
+    "title": "Forces with overstrength factor Omega0 (Section 12.4.3)",
+    "Emh": "Emh = Omega0 * QE  (for elements required to remain elastic: collectors, columns of discontinuous systems, etc.)",
+    "limit": "Emh need not exceed the capacity-limited force of the system (12.4.3.1)."
+  },
+
+  "storyDrift": {
+    "title": "TABLE 12.12-1 — Allowable story drift Delta_a",
+    "columns": ["Structure type", "Risk I/II", "Risk III", "Risk IV"],
+    "rows": [
+      { "type": "Structures (other than masonry shear wall) of <=4 stories with walls/partitions/ceilings and exterior systems designed to accommodate drift", "I_II": "0.025 hsx", "III": "0.020 hsx", "IV": "0.015 hsx" },
+      { "type": "Masonry cantilever shear wall structures", "I_II": "0.010 hsx", "III": "0.010 hsx", "IV": "0.010 hsx" },
+      { "type": "Other masonry shear wall structures",      "I_II": "0.007 hsx", "III": "0.007 hsx", "IV": "0.007 hsx" },
+      { "type": "All other structures",                     "I_II": "0.020 hsx", "III": "0.015 hsx", "IV": "0.010 hsx" }
+    ],
+    "designDrift": "Delta = Cd * delta_xe / Ie  (Eq. 12.8-15), where delta_xe is the elastic displacement from the analysis.",
+    "note": "hsx = story height below level x."
+  },
+
+  "period": {
+    "title": "Approximate fundamental period Ta (Section 12.8.2)",
+    "equation": "Ta = Ct * hn^x  (hn = structural height above the base)",
+    "table_12_8_2": {
+      "columns": ["Structure type", "Ct (hn in ft)", "Ct (hn in m)", "x"],
+      "rows": [
+        { "type": "Steel moment-resisting frames",                    "Ct_ft": 0.028, "Ct_m": 0.0724, "x": 0.80 },
+        { "type": "Concrete moment-resisting frames",                 "Ct_ft": 0.016, "Ct_m": 0.0466, "x": 0.90 },
+        { "type": "Steel eccentrically braced frames (EBF)",          "Ct_ft": 0.030, "Ct_m": 0.0731, "x": 0.75 },
+        { "type": "Buckling-restrained braced frames (BRBF)",         "Ct_ft": 0.030, "Ct_m": 0.0731, "x": 0.75 },
+        { "type": "All other structural systems",                     "Ct_ft": 0.020, "Ct_m": 0.0488, "x": 0.75 }
+      ]
+    },
+    "lowRiseAlternative": "For moment frames (steel/concrete) of <=12 stories with story height >=10 ft: Ta = 0.1 * N (N = number of stories).",
+    "walls": "For masonry/concrete shear walls, Ta = 0.0019/sqrt(Cw) * hn (Eqs. 12.8-9/10) is an alternative.",
+    "upperLimit": {
+      "rule": "The calculated (analysis) period T must not exceed Cu * Ta.",
+      "Cu_table_12_8_1": [
+        { "SD1": ">=0.40", "Cu": 1.4 },
+        { "SD1": "0.30",   "Cu": 1.4 },
+        { "SD1": "0.20",   "Cu": 1.5 },
+        { "SD1": "0.15",   "Cu": 1.6 },
+        { "SD1": "<=0.10", "Cu": 1.7 }
+      ]
+    }
+  },
+
+  "baseShear": {
+    "title": "Seismic base shear (Section 12.8.1)",
+    "eq_12_8_1": "V = Cs * W  (W = effective seismic weight, Section 12.7.2)",
+    "Cs": "Cs = SDS / (R / Ie)   (Eq. 12.8-2)",
+    "CsMaximum": {
+      "T<=TL": "Cs_max = SD1 / (T * (R/Ie))   (Eq. 12.8-3)",
+      "T>TL":  "Cs_max = SD1 * TL / (T^2 * (R/Ie))   (Eq. 12.8-4)"
+    },
+    "CsMinimum": {
+      "general": "Cs_min = 0.044 * SDS * Ie >= 0.01   (Eq. 12.8-5)",
+      "highS1": "If S1 >= 0.6 g:  Cs_min = 0.5 * S1 / (R/Ie)   (Eq. 12.8-6)"
+    },
+    "verticalDistribution": "Fx = Cvx * V ; Cvx = wx*hx^k / sum(wi*hi^k)  (Eqs. 12.8-11/12), with k=1 for T<=0.5 s, k=2 for T>=2.5 s, interpolated in between."
+  }
+}

@@ -15,6 +15,9 @@ const caseSchema = new Schema(
   {
     name: { type: String, required: true },
     key: { type: String, required: true },
+    // "pattern" (a Load Pattern) or "responseSpectrum" (a combined seismic case). Defaults
+    // to "pattern" so runs recorded before RS existed still read as ordinary cases.
+    kind: { type: String, default: "pattern" },
     bytes: { type: Number, default: 0 },
     // { displacements, member_forces, stations, deflected, reactions, shell_forces }
     // → path relative to the run prefix.

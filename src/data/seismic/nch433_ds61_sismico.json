@@ -1,0 +1,135 @@
+{
+  "_meta": {
+    "fuente": "NCh433.Of1996 Modificada 2009 «Diseño sísmico de edificios» junto con el Decreto Supremo N°61 (MINVU, 2011), que actualizó la clasificación de suelos y el espectro de diseño tras el terremoto del 27F 2010 (texto refundido)",
+    "norma": "NCh433.Of96 Mod.2009 + DS N°61/2011",
+    "pais": "Chile",
+    "unidades": "Sistema internacional (m, m/s, s); aceleraciones como fracción de g",
+    "advertencia": "Herramienta educativa. La clasificación de suelo exige mediciones geofísicas/sondajes y la asignación de zona es por comuna. Verifique siempre contra la norma oficial y el DS61 vigente. El diseño de hormigón armado se rige además por el DS N°60/2011.",
+    "notaSuelosF": "Los suelos Tipo F requieren un estudio de respuesta de sitio específico (no se tabulan parámetros)."
+  },
+
+  "zonasSismicas": {
+    "titulo": "TABLA 6.2 — Zonificación sísmica y aceleración efectiva máxima A0",
+    "concepto": "El territorio se divide en tres zonas. La zona de cada comuna se obtiene de las tablas de zonificación (Tabla 4.1 / Anexo del DS61). En general: Zona 3 = costa, Zona 2 = valle central/intermedia, Zona 1 = cordillera.",
+    "columnas": ["Zona", "A0 (fracción de g)"],
+    "filas": [
+      { "zona": 1, "A0": 0.20 },
+      { "zona": 2, "A0": 0.30 },
+      { "zona": 3, "A0": 0.40 }
+    ]
+  },
+
+  "tiposDeSuelo": {
+    "titulo": "Clasificación sísmica del suelo (DS N°61) y parámetros del espectro",
+    "columnas": ["Tipo", "Descripción", "Vs30 (m/s)", "S", "T0 (s)", "T' (s)", "n", "p"],
+    "filas": [
+      { "tipo": "A", "descripcion": "Roca, suelo cementado",                                  "vs30": ">=900", "S": 0.90, "T0": 0.15, "Tp": 0.20, "n": 1.00, "p": 2.0 },
+      { "tipo": "B", "descripcion": "Roca blanda o fracturada, suelo muy denso o muy firme",   "vs30": ">=500", "S": 1.00, "T0": 0.30, "Tp": 0.35, "n": 1.33, "p": 1.5 },
+      { "tipo": "C", "descripcion": "Suelo denso o firme",                                     "vs30": ">=350", "S": 1.05, "T0": 0.40, "Tp": 0.45, "n": 1.40, "p": 1.6 },
+      { "tipo": "D", "descripcion": "Suelo medianamente denso, o firme",                       "vs30": ">=180", "S": 1.20, "T0": 0.75, "Tp": 0.85, "n": 1.80, "p": 1.0 },
+      { "tipo": "E", "descripcion": "Suelo de compacidad o consistencia mediana",              "vs30": "<180",  "S": 1.30, "T0": 1.20, "Tp": 1.35, "n": 1.80, "p": 1.0 },
+      { "tipo": "F", "descripcion": "Suelos especiales (licuables, colapsables, orgánicos, sensitivos, etc.): requieren estudio de respuesta de sitio", "vs30": "-", "S": null, "T0": null, "Tp": null, "n": null, "p": null }
+    ],
+    "notas": {
+      "vs30": "Vs30 es la velocidad de onda de corte promedio en los 30 m superiores. La clasificación también considera, según el tipo, RQD, resistencia a compresión simple qu, N-SPT y resistencia al corte no drenado su.",
+      "Tp": "T' (Tp en este archivo) es el parámetro de periodo que controla la rama descendente del espectro y del coeficiente sísmico."
+    }
+  },
+
+  "categoriasDeOcupacion": {
+    "titulo": "Categoría del edificio según destino e importancia (coeficiente I)",
+    "columnas": ["Categoría", "Coef. I", "Descripción"],
+    "filas": [
+      { "categoria": "I",   "I": 0.6, "descripcion": "Edificios y otras estructuras aisladas o provisionales, no destinadas a habitación, sin riesgo apreciable para las personas." },
+      { "categoria": "II",  "I": 1.0, "descripcion": "Edificios habitacionales, comerciales y de oficinas de uso público o privado normal, no incluidos en III ni IV." },
+      { "categoria": "III", "I": 1.2, "descripcion": "Edificios de aglomeración de personas o de contenido valioso: escuelas, cines, estadios, cárceles, centros comerciales, templos, etc." },
+      { "categoria": "IV",  "I": 1.2, "descripcion": "Edificios gubernamentales, municipales, de servicios o utilidad pública que deben permanecer operativos tras un sismo: hospitales, cuarteles, centrales, etc." }
+    ]
+  },
+
+  "espectroDeDiseno": {
+    "titulo": "Espectro elástico de pseudo-aceleración de diseño (DS61, análisis modal espectral)",
+    "Sa": "Sa = (S * A0 * alpha * I) / R*",
+    "alpha": {
+      "formula": "alpha = [1 + 4.5*(Tn/T0)^p] / [1 + (Tn/T0)^3]",
+      "descripcion": "Factor de amplificación dinámica, calculado para cada modo n en función de su periodo Tn y de los parámetros T0 y p del suelo."
+    },
+    "Restrella": {
+      "formula": "R* = 1 + T* / (0.10*T0 + T*/R0)",
+      "descripcion": "Factor de reducción de la aceleración espectral, calculado con T* = periodo del modo con mayor masa traslacional equivalente en la dirección de análisis, y R0 de la Tabla 5.1."
+    },
+    "variables": {
+      "S_A0": "S = factor de amplificación de suelo; A0 = aceleración efectiva máxima de la zona.",
+      "I": "Coeficiente de importancia (categoría de ocupación).",
+      "Tn": "Periodo del modo n; T0 y p según tipo de suelo."
+    }
+  },
+
+  "factoresR": {
+    "titulo": "TABLA 5.1 — Valores máximos de los factores de modificación de la respuesta R (análisis estático) y R0 (análisis modal espectral)",
+    "porticos": {
+      "nombre": "Pórticos",
+      "sistemas": [
+        { "id": "acero-omf",  "material": "Acero estructural", "detalle": "Marcos corrientes (OMF)",      "R": 4.0, "R0": 5.0 },
+        { "id": "acero-imf",  "material": "Acero estructural", "detalle": "Marcos intermedios (IMF)",     "R": 5.0, "R0": 6.0 },
+        { "id": "acero-smf",  "material": "Acero estructural", "detalle": "Marcos especiales (SMF)",      "R": 7.0, "R0": 11.0 },
+        { "id": "acero-stmf", "material": "Acero estructural", "detalle": "Marcos de vigas enrejadas (STMF)", "R": 6.0, "R0": 10.0 },
+        { "id": "ha-porticos", "material": "Hormigón armado",  "detalle": "Pórticos",                     "R": 7.0, "R0": 11.0 }
+      ]
+    },
+    "murosYSistemasArriostrados": {
+      "nombre": "Muros y sistemas arriostrados",
+      "sistemas": [
+        { "id": "acero-ocbf", "material": "Acero estructural", "detalle": "Marcos concéntricos corrientes (OCBF)", "R": 3.0, "R0": 5.0 },
+        { "id": "acero-scbf", "material": "Acero estructural", "detalle": "Marcos concéntricos especiales (SCBF)", "R": 5.5, "R0": 8.0 },
+        { "id": "acero-ebf",  "material": "Acero estructural", "detalle": "Marcos excéntricos (EBF)",              "R": 6.0, "R0": 10.0 },
+        { "id": "ha-muros",   "material": "Hormigón armado",   "detalle": "Muros",                                 "R": 7.0, "R0": 11.0 },
+        { "id": "ha-albanileria-criterio-a", "material": "Hormigón armado y albañilería confinada", "detalle": "Cumple criterio A", "R": 6.0, "R0": 9.0 },
+        { "id": "ha-albanileria-sin-criterio-a", "material": "Hormigón armado y albañilería confinada", "detalle": "No cumple criterio A", "R": 4.0, "R0": 4.0 },
+        { "id": "madera-muros", "material": "Madera",          "detalle": "Muros",                                 "R": 5.5, "R0": 7.0 },
+        { "id": "albanileria-confinada", "material": "Albañilería confinada", "detalle": "-",                      "R": 4.0, "R0": 4.0 },
+        { "id": "albanileria-armada-relleno-total", "material": "Albañilería armada", "detalle": "Bloques de hormigón con relleno total", "R": 4.0, "R0": 4.0 },
+        { "id": "albanileria-armada-relleno-parcial", "material": "Albañilería armada", "detalle": "Ladrillo cerámico tipo rejilla, relleno parcial", "R": 3.0, "R0": 3.0 },
+        { "id": "no-clasificados", "material": "Sistemas no clasificados", "detalle": "-",                         "R": 2.0, "R0": null }
+      ]
+    },
+    "notas": {
+      "R_vs_R0": "R se usa en el método estático (coeficiente sísmico C). R0 se usa en el método modal espectral (a través de R*).",
+      "criterioA": "El 'criterio A' se refiere a la condición de la norma para sistemas mixtos hormigón/albañilería que fija el reparto de la acción sísmica."
+    }
+  },
+
+  "corteBasal": {
+    "titulo": "Esfuerzo de corte basal — método estático (Sección 6.2)",
+    "Q0": "Q0 = C * I * P   (P = peso sísmico del edificio)",
+    "C": "C = (2.75 * S * A0 / (g * R)) * (T'/T*)^n",
+    "Cminimo": "C >= S * A0 / (6 g)",
+    "Cmaximo": {
+      "titulo": "TABLA 6.4 — Valor máximo del coeficiente sísmico Cmax = coef * S * A0 / g",
+      "columnas": ["R", "coef (× S·A0/g)"],
+      "filas": [
+        { "R": 2.0, "coef": 0.90 },
+        { "R": 3.0, "coef": 0.60 },
+        { "R": 4.0, "coef": 0.55 },
+        { "R": 5.5, "coef": 0.40 },
+        { "R": 6.0, "coef": 0.35 },
+        { "R": 7.0, "coef": 0.35 }
+      ]
+    },
+    "nota": "T* = periodo del modo con mayor masa traslacional en la dirección analizada. Para valores intermedios de R, Cmax se interpola linealmente."
+  },
+
+  "limitesDeDeriva": {
+    "titulo": "Deformaciones sísmicas admisibles (Sección 5.9)",
+    "derivaEntrepisoCM": "El desplazamiento relativo máximo entre dos pisos consecutivos, medido en el centro de masas, no debe exceder 0.002 * h  (h = altura de entrepiso).",
+    "derivaPuntoDesfavorable": "El desplazamiento relativo entre dos pisos consecutivos en cualquier punto de la planta no debe exceder en más de 0.001 * h el valor del centro de masas.",
+    "nota": "Los desplazamientos se calculan a partir del análisis con el espectro reducido; la norma no aplica un factor Cd de amplificación como otros códigos."
+  },
+
+  "metodosDeAnalisis": {
+    "titulo": "Métodos de análisis sísmico (Sección 6.1)",
+    "estatico": "Análisis estático (fuerzas horizontales equivalentes): permitido para estructuras de hasta 5 pisos y hasta 20 m de altura, y para estructuras de 6 a 15 pisos que cumplan las condiciones de regularidad y periodo de la norma.",
+    "modalEspectral": "Análisis modal espectral: aplicable a cualquier estructura y obligatorio cuando no se cumplen las condiciones del método estático. Usa el espectro Sa con R* y R0.",
+    "nota": "Existen además disposiciones para torsión accidental, efectos P-Delta y combinación modal (CQC / raíz cuadrada de la suma de cuadrados)."
+  }
+}

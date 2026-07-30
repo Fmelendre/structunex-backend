@@ -116,7 +116,10 @@ async function pruneRuns(projectId) {
 
 /**
  * Launch the analysis in the background and return immediately.
- * `payload` is what the calc-service expects: { analysisOptions, model, massSource, modalCases }.
+ * `payload` is what the calc-service expects:
+ * { analysisOptions, model, massSource, modalCases, responseSpectrum }.
+ * `responseSpectrum` (functions already sampled by resolveOptions + the cases) is
+ * forwarded verbatim via the spread below; absent/null => static + modal only.
  */
 async function start(projectId, payload) {
   const key = String(projectId);

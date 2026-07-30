@@ -70,6 +70,42 @@ const modalCase = z.object({
 // áreas se enganchan por `area.diaphragm === name`.
 const diaphragm = z.object({ name: z.string().min(1) });
 
+// Función de espectro de respuesta (Define ▸ Funciones). Se guardan los
+// PARÁMETROS de la norma, no la curva: la curva se regenera en el cliente desde
+// el catálogo (GET /seismic-codes), así que almacenarla solo la dejaría
+// desincronizada.
+//
+// `source` y `params` son OPACOS a propósito. El backend nunca usa esos
+// parámetros —los guarda y los devuelve—, y quien de verdad valida es el
+// generador de cada norma en el cliente, que revienta con lo que no resuelve.
+// Gracias a eso, añadir una norma no toca este archivo.
+const spectrumFunction = z.object({
+  name: z.string().min(1),
+  source: z.string().min(1),
+  damping: z.number().positive(),
+  params: z.record(z.unknown()).default({}),
+});
+
+// Caso de carga tipo Response Spectrum (Define → Casos de carga). Referencia por
+// nombre la función de espectro y el caso modal del que toma los modos, igual
+// que las cargas referencian loadPatterns[].name. La coherencia de esas
+// referencias la valida el cliente: aquí solo se comprueba la forma.
+const spectrumLoadRow = z.object({
+  direction: z.enum(["UX", "UY", "UZ"]),
+  function: z.string().min(1),
+  scaleFactor: z.number(),
+});
+
+const responseSpectrumCase = z.object({
+  name: z.string().min(1),
+  modalCase: z.string().min(1),
+  loads: z.array(spectrumLoadRow),
+  modalCombination: z.enum(["CQC", "SRSS"]),
+  directionalCombination: z.enum(["SRSS", "ABS"]),
+  modalDamping: z.number().positive().lt(1),
+  diaphragmEccentricity: z.number().min(0).lt(1),
+});
+
 // GDL disponibles elegidos por el usuario (Analizar → Opciones de análisis,
 // estilo SAP2000 "Available DOFs"). null/ausente = automático (se deducen de la
 // formulación del proyecto o de la geometría).
@@ -86,6 +122,8 @@ const configuration = z
     massSource: massSource.nullable().optional(),
     modalCases: z.array(modalCase).optional(),
     diaphragms: z.array(diaphragm).optional(),
+    spectrumFunctions: z.array(spectrumFunction).optional(),
+    responseSpectrumCases: z.array(responseSpectrumCase).optional(),
   })
   .strict();
 

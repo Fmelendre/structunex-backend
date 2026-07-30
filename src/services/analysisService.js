@@ -18,6 +18,7 @@ const {
 const { AppError } = require("../middleware/errorHandler");
 const analysisJob = require("./analysisJob");
 const s3Service = require("./s3Service");
+const spectrumGenerators = require("../lib/spectrumGenerators");
 
 // Lo que se devuelve de una ejecución: metadatos y resumen, nunca el payload. Los
 // resultados pesados están en S3 en Parquet y los baja el navegador con una URL
@@ -196,10 +197,13 @@ async function resolveOptions(projectId, options) {
     : [];
   if (activeDofs.length === 0) activeDofs = [...ALL_DOFS];
 
-  // One config read for load patterns + the modal inputs (Mass Source, Modal cases).
-  // SAP-style single Run: the calc-service also solves modes when modalCases is present.
+  // One config read for load patterns + the modal inputs (Mass Source, Modal cases) +
+  // the response-spectrum condition. SAP-style single Run: the calc-service also solves
+  // modes when modalCases is present, and combines them for each responseSpectrumCase.
   const config = await ModelConfiguration.findOne({ projectId })
-    .select("loadPatterns massSource modalCases")
+    .select(
+      "loadPatterns massSource modalCases spectrumFunctions responseSpectrumCases"
+    )
     .lean();
 
   let loadPatterns = Array.isArray(opts.loadPatterns) ? opts.loadPatterns : null;
@@ -212,8 +216,69 @@ async function resolveOptions(projectId, options) {
 
   const massSource = (config && config.massSource) || null;
   const modalCases = (config && config.modalCases) || [];
+  const responseSpectrum = buildResponseSpectrum(config);
 
-  return { analysisOptions: { activeDofs, loadPatterns }, massSource, modalCases };
+  return {
+    analysisOptions: { activeDofs, loadPatterns },
+    massSource,
+    modalCases,
+    responseSpectrum,
+  };
+}
+
+// Builds the response-spectrum condition the calc-service consumes: the spectrum
+// functions referenced by the cases, SAMPLED here into `{T, accel}` tables (fraction of
+// g), plus the cases themselves (pass-through of the stored fields). The frontend never
+// generates the curve for the solve — that is this function's job, so the analysis does
+// not depend on the client. Returns null when the project defines no RS cases.
+//
+// A function that fails to sample (bad params, or an R combination COVENIN does not
+// define) is dropped, not fatal: the calc-service then notes the case that referenced a
+// missing function. A whole run must never fall over one bad spectrum.
+function buildResponseSpectrum(config) {
+  const cases = (config && config.responseSpectrumCases) || [];
+  if (cases.length === 0) return null;
+
+  const byName = new Map();
+  for (const fn of (config && config.spectrumFunctions) || []) byName.set(fn.name, fn);
+
+  // Only sample the functions the cases actually reference (dedup by name).
+  const referenced = new Set();
+  for (const c of cases) {
+    for (const load of c.loads || []) if (load.function) referenced.add(load.function);
+  }
+
+  const functions = [];
+  for (const name of referenced) {
+    const fn = byName.get(name);
+    if (!fn) continue; // the calc-service notes the missing reference
+    try {
+      const points = spectrumGenerators.sample(fn);
+      if (Array.isArray(points) && points.length >= 2) {
+        functions.push({ name: fn.name, damping: fn.damping != null ? fn.damping : 0.05, points });
+      }
+    } catch (err) {
+      console.warn(
+        `[analysis] spectrum function '${name}' (${fn.source}) could not be sampled: ${err.message}`
+      );
+    }
+  }
+
+  const outCases = cases.map((c) => ({
+    name: c.name,
+    modalCase: c.modalCase,
+    loads: (c.loads || []).map((l) => ({
+      direction: l.direction,
+      function: l.function,
+      scaleFactor: l.scaleFactor != null ? l.scaleFactor : 1,
+    })),
+    modalCombination: c.modalCombination || "CQC",
+    directionalCombination: c.directionalCombination || "SRSS",
+    modalDamping: c.modalDamping != null ? c.modalDamping : 0.05,
+    diaphragmEccentricity: c.diaphragmEccentricity != null ? c.diaphragmEccentricity : 0,
+  }));
+
+  return { functions, cases: outCases };
 }
 
 // Runs the calculation for an already-authorized project (loaded by
@@ -228,10 +293,8 @@ async function run(project, options) {
 
   // Assemble everything the solver needs BEFORE going async, so a bad model still fails
   // as a normal 4xx on this request instead of surfacing later as a job error.
-  const { analysisOptions, massSource, modalCases } = await resolveOptions(
-    projectId,
-    options
-  );
+  const { analysisOptions, massSource, modalCases, responseSpectrum } =
+    await resolveOptions(projectId, options);
   const model = await assembleModel(projectId);
 
   await analysisJob.start(projectId, {
@@ -239,6 +302,7 @@ async function run(project, options) {
     model,
     massSource,
     modalCases,
+    responseSpectrum,
   });
 
   return {
