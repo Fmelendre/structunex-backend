@@ -58,10 +58,14 @@ const diaphragmSchema = new Schema(
 );
 
 // Load Combinations (Define → Load Combinations, estilo SAP2000): suma lineal
-// de patrones con factor. `pattern` referencia loadPatterns[].name.
+// de términos con factor. Un término es O BIEN `pattern` (referencia
+// loadPatterns[].name, término estático) O BIEN `seismic:true` (marcador del
+// término sísmico). El marcador NO guarda un nombre: se resuelve a los casos
+// Response Spectrum del proyecto por tipo, así renombrar el caso RS no rompe el combo.
 const comboFactorSchema = new Schema(
   {
-    pattern: { type: String, required: true },
+    pattern: { type: String },
+    seismic: { type: Boolean },
     factor: { type: Number, required: true },
   },
   { _id: false }

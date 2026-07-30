@@ -36,11 +36,14 @@ const loadPattern = z.object({
   selfWeightMultiplier: z.number().optional(),
 });
 
-// Combinación de carga: suma lineal de patrones (pattern = loadPatterns[].name).
-const comboFactor = z.object({
-  pattern: z.string().min(1),
-  factor: z.number(),
-});
+// Combinación de carga: suma lineal de términos. Cada término es exactamente uno de:
+//  - { pattern, factor }      término estático (pattern = loadPatterns[].name)
+//  - { seismic:true, factor } término sísmico (se resuelve a los casos Response Spectrum
+//                             por tipo; name-free, robusto a renombrar el caso RS).
+const comboFactor = z.union([
+  z.object({ pattern: z.string().min(1), factor: z.number() }).strict(),
+  z.object({ seismic: z.literal(true), factor: z.number() }).strict(),
+]);
 const loadCombination = z.object({
   name: z.string().min(1),
   factors: z.array(comboFactor),
