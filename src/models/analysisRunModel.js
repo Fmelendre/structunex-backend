@@ -31,6 +31,9 @@ const summarySchema = new Schema(
   {
     perCase: { type: Array, default: [] },
     drift: { type: Array, default: [] },
+    // Cortante y vuelco por planta de los casos Response Spectrum (fuerzas laterales
+    // equivalentes combinadas). Vacío para runs sin RS. Cada fila: { case, z, vx, vy, mx, my }.
+    storyForces: { type: Array, default: [] },
   },
   { _id: false }
 );
