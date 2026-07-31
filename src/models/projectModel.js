@@ -14,10 +14,17 @@ const projectSchema = new Schema(
       enum: ["draft", "solving", "solved", "error"],
       default: "draft",
     },
+    // Bloqueo del modelo (estilo SAP2000): al correr un análisis se pone en true
+    // (ver services/analysisJob.js) y el frontend impide editar geometría y config.
+    // Solo se limpia con un PATCH manual de desbloqueo; desbloquear NO borra los
+    // resultados (se conservan como historial en analysis_runs).
+    isLocked: { type: Boolean, default: false },
     // Live progress of the running analysis (see services/analysisJob.js). The frontend
-    // polls GET /projects/:id/analysis and renders `step` + `message`; `current`/`total`
-    // only mean something for the per-load-pattern loop. `updatedAt` doubles as the
-    // heartbeat that lets us spot a run orphaned by a dyno restart.
+    // polls GET /projects/:id/analysis and localizes its own text from `step` + the
+    // structured fields below (`caseName`, `meshAreas`, ...); `message` is only a legacy
+    // English fallback for steps the UI doesn't recognize. `current`/`total` only mean
+    // something for the per-load-pattern loop. `updatedAt` doubles as the heartbeat that
+    // lets us spot a run orphaned by a dyno restart.
     analysisProgress: {
       type: new Schema(
         {
@@ -25,6 +32,11 @@ const projectSchema = new Schema(
           message: { type: String },
           current: { type: Number },
           total: { type: Number },
+          // Structured detail the calc-service emits so the UI builds localized text.
+          caseName: { type: String },
+          meshAreas: { type: Number },
+          meshShells: { type: Number },
+          modeCount: { type: Number },
           updatedAt: { type: Date },
         },
         { _id: false }

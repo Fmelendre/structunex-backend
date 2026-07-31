@@ -160,6 +160,9 @@ const createProjectSchema = z.object({
   company: z.string().optional(),
   engineer: z.string().optional(),
   description: z.string().optional(),
+  // Bloqueo del modelo. Se auto-activa al correr análisis; el desbloqueo manual
+  // llega por PATCH con { isLocked: false }.
+  isLocked: z.boolean().optional(),
 });
 
 const updateProjectMetaSchema = createProjectSchema.partial();

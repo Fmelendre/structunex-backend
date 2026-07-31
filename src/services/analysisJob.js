@@ -31,20 +31,25 @@ function isRunning(projectId) {
   return running.has(String(projectId));
 }
 
-async function setProgress(projectId, step, message, current, total) {
+// Structured fields we persist and relay verbatim; the frontend localizes its own text
+// from them. `message` is only a legacy English fallback for unrecognized steps.
+const PROGRESS_FIELDS = [
+  "step",
+  "message",
+  "current",
+  "total",
+  "caseName",
+  "meshAreas",
+  "meshShells",
+  "modeCount",
+];
+
+async function setProgress(projectId, progress) {
+  const doc = { updatedAt: new Date() };
+  for (const field of PROGRESS_FIELDS) doc[field] = progress[field] ?? null;
   await Project.updateOne(
     { _id: projectId },
-    {
-      $set: {
-        analysisProgress: {
-          step,
-          message,
-          current: current ?? null,
-          total: total ?? null,
-          updatedAt: new Date(),
-        },
-      },
-    }
+    { $set: { analysisProgress: doc } }
   );
 }
 
@@ -139,10 +144,14 @@ async function start(projectId, payload) {
     {
       $set: {
         status: "solving",
+        // Auto-bloqueo del modelo al arrancar el análisis (estilo SAP2000). Se
+        // limpia solo con un PATCH manual de desbloqueo. Se hace aquí, dentro del
+        // await previo a la respuesta HTTP, para que el 202 ya llegue con el lock.
+        isLocked: true,
         analysisError: null,
         analysisProgress: {
           step: "preparing",
-          message: "Preparando modelo",
+          message: "Preparing model",
           current: null,
           total: null,
           updatedAt: new Date(),
@@ -172,8 +181,9 @@ async function start(projectId, payload) {
         {
           signal: controller.signal,
           onProgress: (e) => {
-            // Fire-and-forget: a lost progress write must not break the run.
-            setProgress(projectId, e.step, e.message, e.current, e.total).catch(() => {});
+            // Fire-and-forget: a lost progress write must not break the run. The whole
+            // event (incl. structured fields like caseName/meshShells) is persisted as-is.
+            setProgress(projectId, e).catch(() => {});
           },
         }
       );
@@ -185,7 +195,7 @@ async function start(projectId, payload) {
         );
       }
 
-      await setProgress(projectId, "saving", "Guardando resultados");
+      await setProgress(projectId, { step: "saving", message: "Saving results" });
       await saveManifest(run, manifest);
       await Project.updateOne(
         { _id: projectId },

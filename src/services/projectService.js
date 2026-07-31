@@ -58,6 +58,8 @@ async function updateProject(project, patch) {
     "company",
     "engineer",
     "description",
+    // Desbloqueo manual del modelo (el auto-bloqueo lo hace analysisJob.start).
+    "isLocked",
   ];
   for (const field of fields) {
     if (patch[field] !== undefined) project[field] = patch[field];

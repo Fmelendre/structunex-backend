@@ -307,9 +307,10 @@ async function run(project, options) {
 
   return {
     status: "solving",
+    // The UI localizes its own title from `step`; `message` is only a legacy fallback.
     progress: {
       step: "preparing",
-      message: `Preparando modelo · ${model.nodes.length} nudos, ${model.elements.length} barras, ${model.areas.length} áreas`,
+      message: "Preparing model",
     },
   };
 }
