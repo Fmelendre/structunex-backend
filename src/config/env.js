@@ -8,11 +8,11 @@ const env = {
   mongoUri: process.env.MONGODB_URI || "mongodb://localhost:27017/structunex",
   calcServiceUrl: process.env.CALC_SERVICE_URL || "http://localhost:8000",
   // Orígenes permitidos para CORS. Acepta una lista separada por comas.
-  // Por defecto, los dominios de producción (apex + www). localhost se permite
+  // Por defecto, la app de producción (app.structunex.com). localhost se permite
   // aparte en app.js para desarrollo.
   clientOrigins: (
     process.env.CLIENT_ORIGIN ||
-    "https://structunex.com,https://www.structunex.com"
+    "https://app.structunex.com"
   )
     .split(",")
     .map((o) => o.trim())
