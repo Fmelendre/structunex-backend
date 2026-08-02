@@ -12,6 +12,7 @@ const { AnalysisRun } = require("./analysisRunModel");
 const { CatalogMaterial } = require("./catalogMaterialModel");
 const { CatalogFrameSection } = require("./catalogFrameSectionModel");
 const { CatalogAreaSection } = require("./catalogAreaSectionModel");
+const { User } = require("./userModel");
 
 // Maps each key of the nested `model` payload to its collection. The service
 // iterates this to split on write, assemble on read, and clean up on delete —
@@ -44,5 +45,6 @@ module.exports = {
   CatalogMaterial,
   CatalogFrameSection,
   CatalogAreaSection,
+  User,
   CHILD_MODELS,
 };

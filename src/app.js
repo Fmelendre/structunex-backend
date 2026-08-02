@@ -3,6 +3,7 @@ const cors = require("cors");
 const { clerkMiddleware } = require("@clerk/express");
 const { env } = require("./config/env");
 const routes = require("./routes");
+const webhookRoutes = require("./routes/webhookRoutes");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -22,6 +23,11 @@ app.use(
     credentials: true,
   })
 );
+
+// Webhooks must see the RAW body (Svix signature verification), so they are
+// mounted BEFORE the global JSON parser and are not behind requireAuth.
+app.use("/api/webhooks", webhookRoutes);
+
 app.use(express.json({ limit: "2mb" }));
 
 // Attaches Clerk session state to every request (does not block on its own).

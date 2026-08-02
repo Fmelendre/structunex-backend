@@ -19,6 +19,18 @@ const env = {
     .filter(Boolean),
   clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY,
   clerkSecretKey: process.env.CLERK_SECRET_KEY,
+  // Svix signing secret for the Clerk webhook (Dashboard → Webhooks → endpoint).
+  clerkWebhookSigningSecret: process.env.CLERK_WEBHOOK_SIGNING_SECRET,
+
+  // Mailchimp: registered users are pushed into the audience by the Clerk webhook.
+  mailchimpApiKey: process.env.MAILCHIMP_API_KEY,
+  // Server prefix (e.g. "us20"). Falls back to the suffix of the API key.
+  mailchimpServerPrefix:
+    process.env.MAILCHIMP_SERVER_PREFIX ||
+    (process.env.MAILCHIMP_API_KEY
+      ? process.env.MAILCHIMP_API_KEY.split("-")[1]
+      : undefined),
+  mailchimpAudienceId: process.env.MAILCHIMP_AUDIENCE_ID,
 
   // Almacenamiento de resultados. El calc-service escribe el Parquet en este mismo
   // bucket/prefijo; aquí solo se leen (URL prefirmadas) y se borran. Ojo: las
@@ -45,6 +57,20 @@ if (!env.s3Bucket) {
   console.warn(
     "[env] AWS_S3_BUCKET is not set — analysis results cannot be stored or served. " +
       "Set AWS_S3_BUCKET (and AWS credentials) to run analyses."
+  );
+}
+
+if (!env.clerkWebhookSigningSecret) {
+  console.warn(
+    "[env] CLERK_WEBHOOK_SIGNING_SECRET is not set — the Clerk webhook will reject " +
+      "all deliveries. Set it from the Clerk Dashboard webhook endpoint."
+  );
+}
+
+if (!env.mailchimpApiKey || !env.mailchimpAudienceId) {
+  console.warn(
+    "[env] MAILCHIMP_API_KEY / MAILCHIMP_AUDIENCE_ID not set — new users will be " +
+      "saved to the DB but not synced to the Mailchimp audience."
   );
 }
 
