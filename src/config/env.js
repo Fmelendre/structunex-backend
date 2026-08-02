@@ -24,12 +24,9 @@ const env = {
 
   // Mailchimp: registered users are pushed into the audience by the Clerk webhook.
   mailchimpApiKey: process.env.MAILCHIMP_API_KEY,
-  // Server prefix (e.g. "us20"). Falls back to the suffix of the API key.
-  mailchimpServerPrefix:
-    process.env.MAILCHIMP_SERVER_PREFIX ||
-    (process.env.MAILCHIMP_API_KEY
-      ? process.env.MAILCHIMP_API_KEY.split("-")[1]
-      : undefined),
+  // Data-center region for our Mailchimp account (matches the API-key suffix and
+  // the us20.admin.mailchimp.com dashboard URL). Fixed — not an env var.
+  mailchimpServerPrefix: "us20",
   mailchimpAudienceId: process.env.MAILCHIMP_AUDIENCE_ID,
 
   // Almacenamiento de resultados. El calc-service escribe el Parquet en este mismo
