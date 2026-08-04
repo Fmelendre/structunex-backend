@@ -46,6 +46,23 @@ const projectSchema = new Schema(
     // Why the last run failed (or that it was cancelled). Kept apart from `status` so a
     // failed re-run can leave the previous results in place and still report the reason.
     analysisError: { type: String, default: null },
+    // Progreso de la COMPROBACIÓN por normativa (sección Design, ver
+    // services/designJob.js). Va aparte de `analysisProgress` y no comparte `status`
+    // con él a propósito: comprobar no re-resuelve el modelo, así que un diseño en
+    // curso no debe dejar el proyecto en "solving" ni bloquear la geometría.
+    designProgress: {
+      type: new Schema(
+        {
+          step: { type: String },
+          current: { type: Number },
+          total: { type: Number },
+          updatedAt: { type: Date },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
+    designError: { type: String, default: null },
     // Metadata del proyecto (creada desde el asistente del frontend).
     templateId: { type: String },
     // Tipo de análisis (formulación de cálculo). Inmutable una vez creado.

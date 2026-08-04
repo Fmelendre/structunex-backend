@@ -15,6 +15,7 @@ const loadRoutes = require("./loadRoutes");
 const areaRoutes = require("./areaRoutes");
 const modelRoutes = require("./modelRoutes");
 const analysisRoutes = require("./analysisRoutes");
+const designRoutes = require("./designRoutes");
 const projectLoadCombinationRoutes = require("./projectLoadCombinationRoutes");
 
 const router = Router();
@@ -42,6 +43,7 @@ router.use("/:projectId/loads", loadRoutes);
 router.use("/:projectId/areas", areaRoutes);
 router.use("/:projectId/model", modelRoutes);
 router.use("/:projectId/analysis", analysisRoutes);
+router.use("/:projectId/design", designRoutes);
 router.use("/:projectId/load-combinations", projectLoadCombinationRoutes);
 
 module.exports = router;
