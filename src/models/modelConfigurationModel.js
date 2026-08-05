@@ -168,6 +168,37 @@ const responseSpectrumCaseSchema = new Schema(
   { _id: false }
 );
 
+// Lo que el usuario fija a mano para UNA barra al comprobarla. Sin nada de esto el
+// motor toma las hipótesis prudentes (K = 1, la longitud de la barra como longitud sin
+// arriostrar, Cb = 1), que es lo correcto cuando nadie ha dicho lo contrario: suponer
+// un arriostramiento que no está en el modelo daría capacidades mayores que las reales.
+const designOverrideSchema = new Schema(
+  {
+    elementId: { type: String, required: true },
+    // "column" | "beam". Pisa tanto la geometría como el designRole de la sección.
+    role: { type: String, default: null },
+    K2: { type: Number, default: null }, // coeficiente de pandeo, eje débil
+    K3: { type: Number, default: null }, // coeficiente de pandeo, eje fuerte
+    unbraced: { type: Number, default: null }, // longitud sin arriostrar (m)
+    Cb: { type: Number, default: null },
+  },
+  { _id: false }
+);
+
+// Preferencias de la comprobación por normativa (sección Design). Viven en la
+// configuración del modelo y no en la ejecución porque son una elección del proyecto
+// que sobrevive a relanzar el diseño.
+const designPreferencesSchema = new Schema(
+  {
+    code: { type: String, default: "ACI318-19" },       // hormigón
+    steelCode: { type: String, default: "AISC360-16" }, // acero
+    // Qué combinaciones entran a comprobar. Vacío = todas las del proyecto.
+    comboNames: { type: [String], default: [] },
+    overrides: { type: [designOverrideSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const modelConfigurationSchema = new Schema(
   {
     projectId: {
@@ -196,6 +227,9 @@ const modelConfigurationSchema = new Schema(
     // consumen en la Etapa B (elementos/áreas referencian el catálogo).
     defaultFrameSectionId: { type: String, default: null },
     defaultAreaSectionId: { type: String, default: null },
+    // Preferencias de la sección Design. null = aún no se ha comprobado nada, y el
+    // servicio aplica los valores por defecto del esquema.
+    designPreferences: { type: designPreferencesSchema, default: null },
   },
   { collection: "model_configuration", timestamps: true }
 );

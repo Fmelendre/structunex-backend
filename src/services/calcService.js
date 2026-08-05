@@ -136,4 +136,23 @@ async function analyzeModelStream(request, { onProgress, signal } = {}) {
   });
 }
 
-module.exports = { analyzeModel, analyzeModelStream };
+// Comprobación por normativa. El calc-service no resuelve nada aquí: lee los esfuerzos
+// que el análisis dejó en S3, superpone las combinaciones y comprueba, así que la
+// llamada es corta y no necesita stream ni latidos.
+//
+// El timeout es holgado porque el coste crece con (barras × combinaciones) y un edificio
+// con muchas combinaciones puede tardar; sigue siendo un orden de magnitud menos que un
+// MYSTRAN, que es la razón de que el diseño se pueda relanzar solo.
+async function designModel(request, { signal } = {}) {
+  try {
+    const { data } = await axios.post(`${env.calcServiceUrl}/design`, request, {
+      timeout: 300000,
+      signal,
+    });
+    return { manifest: data?.manifest ?? null, data: data?.manifest ? null : data };
+  } catch (err) {
+    throw fromCalcError(err);
+  }
+}
+
+module.exports = { analyzeModel, analyzeModelStream, designModel };
